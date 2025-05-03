@@ -19,8 +19,8 @@ jobs:
       - name: Install deps
         run: |
           pip install -r requirements.txt
-          pip install git+https://github.com/remla2025-team9/lib-ml.git@1-init-preprocessing-logic
-
+          pip install git+https://github.com/remla2025-team9/lib-ml.git
+          
       - name: Run training (CI tag)
         env:
           VERSION: ci-$(date +%s)
