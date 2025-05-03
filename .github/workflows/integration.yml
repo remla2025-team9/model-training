@@ -1,0 +1,33 @@
+name: Integration
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths-ignore: [".github/**", "README.md"]
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+          pip install git+https://github.com/remla2025-team9/lib-ml.git@1-init-preprocessing-logic
+
+      - name: Run training (CI tag)
+        env:
+          VERSION: ci-$(date +%s)
+        run: |
+          python src/train.py \
+            --version     $VERSION \
+            --model-output models/sentiment_pipeline-${VERSION}.joblib
+
+      - name: Check artifact
+        run: ls -lh models/sentiment_pipeline-*.joblib
