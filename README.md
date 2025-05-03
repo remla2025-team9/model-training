@@ -68,5 +68,5 @@ On every Git tag (e.g. `v1.0.0`), the `.github/workflows/train-release.yaml` wor
 The public download URL will be:
 
 ```
-https://github.com/<org>/model-training/releases/download/v1.0.0/model-v1.0.0.pkl
+https://github.com/remla2025-team9/model-training/releases/download/vx.y.z/sentiment_pipeline-vx.y.z.joblib
 ```
