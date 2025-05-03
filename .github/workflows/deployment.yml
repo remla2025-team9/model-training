@@ -66,7 +66,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install git+https://github.com/remla2025-team9/lib-ml.git
+          pip install git+https://github.com/remla2025-team9/lib-ml.git@1-init-preprocessing-logic
 
       - name: Train model
         run: |
