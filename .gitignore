@@ -1,0 +1,5 @@
+models/
+output/
+src/old_ver.py
+.DS_Store
+.github/.DS_Store

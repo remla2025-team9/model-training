@@ -1,0 +1,28 @@
+name: Delivery
+
+on:
+  push:
+    branches: [main]        
+    tags:     ['v*.*.*']
+
+permissions:
+  contents: write    
+
+jobs:
+  update-tag:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Bump patch-pre tag
+      id: tag_version
+      if: github.ref == 'refs/heads/main'
+      uses: mathieudutour/github-tag-action@v6.2
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        pre_release_branches: main
+        default_prerelease_bump: prerelease      
+        append_to_pre_release_tag: pre        
+        tag_prefix: v
+        default_bump: patch
