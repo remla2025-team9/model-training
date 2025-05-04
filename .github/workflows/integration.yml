@@ -23,7 +23,7 @@ jobs:
           
       - name: Run training (CI tag)
         env:
-          VERSION: ci-$(date +%s)
+          VERSION: ci-1.2.3
         run: |
           python src/train.py \
             --version     $VERSION \
