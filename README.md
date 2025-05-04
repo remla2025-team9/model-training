@@ -70,3 +70,42 @@ The public download URL will be:
 ```
 https://github.com/remla2025-team9/model-training/releases/download/vx.y.z/sentiment_pipeline-vx.y.z.joblib
 ```
+
+## Model integration
+The trained model can now be integrated and used for predictions
+
+### 1. From a GitHub Release
+Each stable version tag `vX.Y.Z` has its model attached as a release asset:
+```
+https://github.com/remla2025-team9/model-training/releases/download/vX.Y.Z/sentiment_pipeline-vX.Y.Z.joblib
+```
+In your code or service, set the URL and fetch at startup:
+```python
+import os
+import pathlib
+import requests
+import joblib
+
+MODEL_URL = os.getenv(
+    "MODEL_URL",
+    "https://github.com/remla2025-team9/model-training/releases/download/v1.2.3/"
+    "sentiment_pipeline-v1.2.3.joblib"
+)
+```
+Download and cache the model:
+```python
+cache_dir = pathlib.Path("/cache/models")
+cache_dir.mkdir(parents=True, exist_ok=True)
+local_path = cache_dir / pathlib.Path(MODEL_URL).name
+
+if not local_path.exists():
+    resp = requests.get(MODEL_URL)
+    resp.raise_for_status()
+    local_path.write_bytes(resp.content)
+```
+Load the model:
+```python
+model = joblib.load(local_path)
+```
+### 2. From a local file
+It is also possible to load the model from a local file, either by cloning the repo and following the steps above to train and generate the model, or by downloading the model file directly from the GitHub release page. For quick inspection, open the Actions tab, select the workflow run that built the model, and download the .joblib file under Artifacts.
