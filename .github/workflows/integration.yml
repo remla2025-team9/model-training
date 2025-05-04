@@ -27,7 +27,7 @@ jobs:
         run: |
           python src/train.py \
             --version     $VERSION \
-            --model-output models/sentiment_pipeline-${VERSION}.joblib
+            --output-path models/sentiment_pipeline-${VERSION}.joblib
 
       - name: Check artifact
         run: ls -lh models/sentiment_pipeline-*.joblib
