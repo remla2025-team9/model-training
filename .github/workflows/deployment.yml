@@ -71,21 +71,20 @@ jobs:
       - name: Train model
         run: |
           python src/train.py \
-            --train-input data/training_data.tsv \
             --version     ${{ steps.resolve_version.outputs.version }} \
-            --model-output models/sentiment_pipeline-v${{ steps.resolve_version.outputs.version }}.joblib
+            --output-path models/sentiment_pipeline.joblib
 
       - name: Upload model artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: sentiment_pipeline-v${{ steps.resolve_version.outputs.version }}.joblib
-          path: models/sentiment_pipeline-v${{ steps.resolve_version.outputs.version }}.joblib
+          name: sentiment_pipeline-${{ steps.resolve_version.outputs.version }}.joblib
+          path: models/sentiment_pipeline-${{ steps.resolve_version.outputs.version }}.joblib
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.resolve_version.outputs.version }}
-          files:    models/sentiment_pipeline-v${{ steps.resolve_version.outputs.version }}.joblib
+          files:    models/sentiment_pipeline-${{ steps.resolve_version.outputs.version }}.joblib
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
