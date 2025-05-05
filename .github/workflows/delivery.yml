@@ -12,7 +12,8 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout full history
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -21,6 +22,7 @@ jobs:
       uses: mathieudutour/github-tag-action@v6.2
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
+        release_branches:    '_NONE_'
         pre_release_branches: main
         default_prerelease_bump: false      
         default_bump: false
@@ -49,7 +51,39 @@ jobs:
       uses: mathieudutour/github-tag-action@v6.2
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
+        release_branches:    '_NONE_'
         pre_release_branches: main
         default_prerelease_bump: ${{ steps.determine_bump.outputs.bump_type }}
         append_to_pre_release_tag: pre
         tag_prefix: v
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install git+https://github.com/remla2025-team9/lib-ml.git
+
+    - name: Train model
+      run: |
+        python src/train.py \
+          --version     ${{ steps.tag_version.outputs.new_tag }} \
+          --output-path models/sentiment_pipeline.joblib
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: sentiment_pipeline-${{ steps.tag_version.outputs.new_tag }}.joblib
+        path: models/sentiment_pipeline-${{ steps.tag_version.outputs.new_tag }}.joblib
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.tag_version.outputs.new_tag }}
+        files: models/sentiment_pipeline-${{ steps.tag_version.outputs.new_tag }}.joblib
+        prerelease: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
