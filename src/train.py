@@ -81,7 +81,7 @@ def main():
     os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
     base, ext = os.path.splitext(args.output_path)
     
-    if args.version == 'latest':
+    if args.version == 'latest' or args.version[0] == 'v':
         versioned_path = f"{base}-{args.version}{ext or '.joblib'}"
     else:
         versioned_path = f"{base}-v{args.version}{ext or '.joblib'}"

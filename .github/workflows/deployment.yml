@@ -97,9 +97,11 @@ jobs:
       - name: Bump next prerelease tag
         uses: mathieudutour/github-tag-action@v6.2
         with:
+          release_branches:         ''            # no branch generates stable tags here
           github_token:        ${{ secrets.GITHUB_TOKEN }}
           tag_prefix:          v
           default_bump:        patch
           default_prerelease_bump: prepatch
           append_to_pre_release_tag: pre
           pre_release_branches: main
+      - run: echo "Created tag → ${{ steps.bump_pre.outputs.new_tag }}"
