@@ -2,10 +2,20 @@ name: Deployment
 
 on:
   workflow_dispatch:
+    inputs:
+      bump_level:
+        description: 'Release level for the stable version (patch, minor, major)'
+        required: false
+        type: choice 
+        options:   
+        - patch
+        - minor
+        - major
+        default: patch
 
 permissions:
-  contents: write   # to push git tags and create releases
-  packages: write   # (omit if you’re not publishing packages)
+  contents: write
+  packages: write
 
 jobs:
   build-train-release:
@@ -13,50 +23,18 @@ jobs:
 
     steps:
       - name: Checkout full history
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Get current version tag
-        id: get_version
+      - name: Bump stable version
+        id: bump_stable_tag
         uses: mathieudutour/github-tag-action@v6.2
         with:
-          github_token:        ${{ secrets.GITHUB_TOKEN }}
-          tag_prefix:          v
-          default_bump:        false
-          default_prerelease_bump: false
-          append_to_pre_release_tag: pre
-          pre_release_branches: main
-
-      - name: Resolve version
-        id: resolve_version
-        run: |
-          PREV_TAG="${{ steps.get_version.outputs.previous_tag }}"
-          STABLE_VERSION=""
-
-          if [[ "${{ github.ref }}" == refs/tags/v*.*.* ]]; then
-            STABLE_VERSION="${GITHUB_REF#refs/tags/v}"
-            echo "Triggered by tag push. Using version: $RESOLVED_VALUE"
-
-          elif [[ -n "$PREV_TAG" ]]; then
-            STABLE_VERSION="${PREV_TAG%-pre.*}"
-            echo "Not triggered by tag. Stripped pre-release from '$PREVIOUS_TAG' to get base version: $RESOLVED_VALUE"
-
-          else
-            echo "::error::Cannot resolve version" && exit 1
-          fi
-
-          echo "version=$STABLE_VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Create stable git tag
-        id: create_stable_tag
-        uses: mathieudutour/github-tag-action@v6.2
-        with:
-          github_token:        ${{ secrets.GITHUB_TOKEN }}
-          custom_tag:          ${{ steps.resolve_version.outputs.version }}
-          default_bump:        false
-          default_prerelease_bump: false
-          tag_prefix:          ''
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          release_branches: main
+          default_bump: ${{ github.event.inputs.bump_level }}  
+          tag_prefix: v
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -71,20 +49,20 @@ jobs:
       - name: Train model
         run: |
           python src/train.py \
-            --version     ${{ steps.resolve_version.outputs.version }} \
+            --version     ${{ steps.bump_stable_tag.outputs.new_tag }} \
             --output-path models/sentiment_pipeline.joblib
 
       - name: Upload model artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sentiment_pipeline-${{ steps.resolve_version.outputs.version }}.joblib
-          path: models/sentiment_pipeline-${{ steps.resolve_version.outputs.version }}.joblib
+          name: sentiment_pipeline-${{ steps.bump_stable_tag.outputs.new_tag }}.joblib
+          path: models/sentiment_pipeline-${{ steps.bump_stable_tag.outputs.new_tag }}.joblib
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.resolve_version.outputs.version }}
-          files:    models/sentiment_pipeline-${{ steps.resolve_version.outputs.version }}.joblib
+          tag_name: ${{ steps.bump_stable_tag.outputs.new_tag }}
+          files:    models/sentiment_pipeline-${{ steps.bump_stable_tag.outputs.new_tag }}.joblib
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -104,4 +82,3 @@ jobs:
           default_prerelease_bump: prepatch
           append_to_pre_release_tag: pre
           pre_release_branches: main
-      - run: echo "Created tag → ${{ steps.bump_pre.outputs.new_tag }}"
