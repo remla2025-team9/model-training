@@ -25,7 +25,7 @@ jobs:
         release_branches: '_NONE_'
         pre_release_branches: main
         default_prerelease_bump: prerelease
-        append_to_pre_release_tag: pre
+        append_to_pre_release_tag: pre # Example: v1.0.0-patch.pre 
         tag_prefix: v
 
     - name: Set up Python
@@ -47,25 +47,40 @@ jobs:
     - name: Train model
       id: train_model
       run: |
-        MODEL_TYPE="logistic"
+        MODEL_TYPE="logistic" # Or make this configurable
         echo "Training model with type: $MODEL_TYPE and version: ${{ steps.tag_version.outputs.new_tag }}"
         python -m sentiment_src.modeling.train \
           --model_type "$MODEL_TYPE" \
           --model_version "${{ steps.tag_version.outputs.new_tag }}"
-        # Define the expected model filename based on train.py logic
+        
         RAW_VERSION="${{ steps.tag_version.outputs.new_tag }}"
-        # Remove 'v' prefix from tag for filename consistency if train.py does this
+        # Remove 'v' prefix from tag for filename consistency with train.py script
         VERSION_NO_V="${RAW_VERSION#v}" 
         MODEL_FILENAME="sentiment_classifier-${MODEL_TYPE}-v${VERSION_NO_V}.joblib"
         echo "MODEL_FILE_PATH=models/${MODEL_FILENAME}" >> $GITHUB_ENV
         echo "Expected model file: models/${MODEL_FILENAME}"
         ls -l models/
-    
+
+    - name: Evaluate model
+      id: evaluate_model
+      run: |
+        echo "Evaluating model: ${{ env.MODEL_FILE_PATH }}"
+        python -m sentiment_src.modeling.predict \
+          --model_path "${{ env.MODEL_FILE_PATH }}"
+        echo "Evaluation metrics generated at reports/evaluation_metrics.json"
+        ls -l reports/
+
     - name: Upload Model Artifact
       uses: actions/upload-artifact@v4
       with:
         name: sentiment-classifier-${{ steps.tag_version.outputs.new_tag }}
         path: ${{ env.MODEL_FILE_PATH }}
+
+    - name: Upload Metrics Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: evaluation-metrics-${{ steps.tag_version.outputs.new_tag }}
+        path: reports/evaluation_metrics.json
 
     - name: Create GitHub Pre-Release
       uses: softprops/action-gh-release@v2

@@ -55,9 +55,27 @@ jobs:
           # Remove 'v' prefix from tag for filename consistency if train.py does this
           VERSION_NO_V="${RAW_VERSION#v}"
           MODEL_FILENAME="sentiment_classifier-${MODEL_TYPE}-v${VERSION_NO_V}.joblib"
+          echo "MODEL_FILE_PATH=models/${MODEL_FILENAME}" >> $GITHUB_ENV # Save for evaluation step
+
 
           if [ ! -f "models/${MODEL_FILENAME}" ]; then
             echo "Error: Trained model file 'models/${MODEL_FILENAME}' not found."
             exit 1
           fi
           ls -l models/ # Log contents for debugging
+
+      - name: Evaluate model (CI run)
+        id: evaluate_model
+        run: |
+          echo "Running model evaluation for model: ${{ env.MODEL_FILE_PATH }}"
+          python -m sentiment_src.modeling.predict \
+            --model_path "${{ env.MODEL_FILE_PATH }}"
+          echo "Model evaluation script finished."
+
+          if [ ! -f "reports/evaluation_metrics.json" ]; then
+            echo "Error: Evaluation metrics file 'reports/evaluation_metrics.json' not found."
+            ls -l reports/
+            exit 1
+          fi
+          echo "Evaluation metrics file found: reports/evaluation_metrics.json"
+          ls -l reports/

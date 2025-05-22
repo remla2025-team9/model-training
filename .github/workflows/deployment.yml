@@ -46,7 +46,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Process data (generate features and split)
+      - name: Process data
         id: process_data
         run: |
           python -m sentiment_src.dataset
@@ -55,33 +55,49 @@ jobs:
       - name: Train model
         id: train_model
         run: |
-          MODEL_TYPE="logistic"
+          MODEL_TYPE="logistic" # Or make this configurable via workflow inputs
           echo "Training model with type: $MODEL_TYPE and version: ${{ steps.tag_version.outputs.new_tag }}"
           python -m sentiment_src.modeling.train \
             --model_type "$MODEL_TYPE" \
             --model_version "${{ steps.tag_version.outputs.new_tag }}"
-          # Define the expected model filename based on train.py logic
+          
           RAW_VERSION="${{ steps.tag_version.outputs.new_tag }}"
-          # Remove 'v' prefix from tag for filename consistency if train.py does this
           VERSION_NO_V="${RAW_VERSION#v}" 
           MODEL_FILENAME="sentiment_classifier-${MODEL_TYPE}-v${VERSION_NO_V}.joblib"
           echo "MODEL_FILE_PATH=models/${MODEL_FILENAME}" >> $GITHUB_ENV
           echo "Expected model file: models/${MODEL_FILENAME}"
           ls -l models/
 
-      - name: Upload Model Artifact
+      - name: Evaluate model
+        id: evaluate_model
+        run: |
+          echo "Evaluating model: ${{ env.MODEL_FILE_PATH }}"
+          python -m sentiment_src.modeling.predict \
+            --model_path "${{ env.MODEL_FILE_PATH }}"
+          echo "Evaluation metrics generated at reports/evaluation_metrics.json"
+          ls -l reports/
+      
+      - name: Upload Model Artifact (for CI records)
         uses: actions/upload-artifact@v4
         with:
           name: sentiment-classifier-${{ steps.tag_version.outputs.new_tag }}
           path: ${{ env.MODEL_FILE_PATH }}
 
-      - name: Create GitHub Pre-Release
+      - name: Upload Metrics Artifact (for CI records)
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-metrics-${{ steps.tag_version.outputs.new_tag }}
+          path: reports/evaluation_metrics.json
+
+      - name: Create GitHub Stable Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag_version.outputs.new_tag }}
           name: "Release ${{ steps.tag_version.outputs.new_tag }}"
           files: |
             ${{ env.MODEL_FILE_PATH }}
+            reports/evaluation_metrics.json
+          prerelease: false # This is a stable release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
