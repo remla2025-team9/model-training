@@ -1,59 +1,130 @@
-# Sentiment Analysis Model Training
+# Restaurant Sentiment Analysis - Model Training
 
-This repository contains tools and scripts to train, evaluate, and export a sentiment analysis model in a decoupled, versioned, and reproducible manner.
+This repository contains scripts to train, evaluate, and export a sentiment analysis model for restaurant reviews. The project follows a structured layout inspired by Cookiecutter Data Science.
+
+<a target="_blank" href="https://cookiecutter-data-science.drivendata.org/">
+    <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" alt="Cookiecutter Data Science Template Badge" />
+</a>
 
 ---
 
-## Repository Structure
+## Project Organization
 
-```text
-.
-├── data/                   # Raw datasets
-│   └── training_data.tsv   # Training dataset
-├── scripts/                # Training source code
-│   ├── preprocess.py       # (Uses lib-ml) Raw → features → .npz
-│   └── train.py            # End-to-end pipeline trainer on TSV
-├── requirements.txt        # Python dependencies
-├── README.md               # This file
-├── .github/workflows/      # CI/CD workflows
-    ├── train-release.yaml  # Automate train & GitHub Release on tag\
-    └── CODEOWNERS
+The project follows a structure adapted from the Cookiecutter Data Science template:
 
+```
+├── .github/             # GitHub Actions workflows (CI/CD - Planned)
+│   └── workflows/
+├── data/
+│   ├── raw/             # Original, immutable data (e.g., training_data.tsv)
+│   └── processed/       # Processed data ready for modeling (features & labels)
+├── docs/                # Project documentation (e.g., MkDocs)
+├── models/              # Trained model artifacts (e.g., sentiment_classifier-nb-v1.0.0.joblib)
+├── notebooks/           # Jupyter notebooks for exploration
+├── reports/             # Evaluation metrics, figures
+│   └── evaluation_metrics.json
+├── src/       # Python source code for the pipeline
+│   ├── __init__.py
+│   ├── config.py        # Configuration variables (paths, defaults)
+│   ├── dataset.py       # Data loading, preprocessing (feature generation), splitting
+│   └── modeling/
+│       ├── __init__.py
+│       ├── train.py     # Model training script
+│       └── predict.py   # Model evaluation script
+├── tests/               # Automated tests (Planned)
+├── .gitignore           # Files for Git to ignore
+├── params.yaml          # Parameters for pipeline stages (Planned for DVC integration)
+├── pylintrc             # Pylint configuration file
+├── pyproject.toml       # Project metadata and tool configuration
+├── requirements.txt     # Python dependencies
+├── Makefile             # (Optional) Makefile for common commands
+└── README.md            # This file
 ```
 
 ---
 
 ## Prerequisites
 
-* Python 3.8 or newer
-* Install dependencies:
+*   Python 3.8 or newer
+*   Git
 
-  ```bash
-  pip install -r requirements.txt
-  ```
-* Install your preprocessing library:
+**Installation:**
 
-  ```bash
-  pip install git+https://github.com/remla2025-team9/lib-ml.git
-  ```
+1.  **Clone the repository:**
+    ```bash
+    git clone <your-repository-url>
+    cd <repository-name>
+    ```
+
+2.  **Install Python dependencies:**
+    It's highly recommended to use a virtual environment:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    pip install -r requirements.txt
+    ```
+    The `requirements.txt` should include your custom preprocessing library:
+    ```
+    # In requirements.txt
+    # ... other packages ...
+    git+https://github.com/remla2025-team9/lib-ml.git # Or your specific preprocessing lib
+    ```
+
 ---
 
-## Usage
-Standalone preprocess + train + eval on a given dataset :
+## Usage - Running the Pipeline Manually
+
+Currently, the pipeline stages are run as individual Python scripts in sequence. DVC integration for automated pipeline management is planned for a future update.
+
+**Step 1: Data Processing (Generate features & split data)**
+
+This script loads the raw data, uses an external library for text preprocessing to generate features, splits the data into training and test sets, and saves the processed features and labels.
 
 ```bash
-python src/train.py \
-  --train-input path/to/training/data.tsv \
-  --model-output destination/path/of/model.joblib \
-  --version x.x.x \
-  --model-type [dn|logistic] \
+python -m src.dataset --test_size 0.2
 ```
+*   **Inputs:** Reads from `data/raw/training_data.tsv` (or as specified by `--raw_data_path` argument or `src/config.py`).
+*   **Outputs:**
+    *   `data/processed/train_features.npz`
+    *   `data/processed/train_labels.csv`
+    *   `data/processed/test_features.npz`
+    *   `data/processed/test_labels.csv`
 
-Both scripts output:
+**Step 2: Model Training**
 
-* A classification report (printed to console)
-* A confusion matrix (printed to console)
-* Saved model artifact (`.joblib`)
+This script loads the processed training features and labels, trains a classifier, and saves the trained model.
+
+```bash
+python -m src.modeling.train --model_type logistic --model_version 1.0.0
+```
+*   **Inputs:** Reads `data/processed/train_features.npz` and `data/processed/train_labels.csv`.
+*   **Parameters:**
+    *   `--model_type`: Choose 'nb' (Gaussian Naive Bayes) or 'logistic' (Logistic Regression).
+    *   `--model_version`: Specify a version for the output model file (e.g., '1.0.0').
+*   **Outputs:** Saves the trained model to `models/sentiment_classifier-<model_type>-v<model_version>.joblib` (e.g., `models/sentiment_classifier-logistic-v1.0.0.joblib`).
+
+**Step 3: Model Evaluation**
+
+This script loads the processed test features and labels, loads a trained model, makes predictions, and saves evaluation metrics.
+
+```bash
+python -m src.modeling.predict --model_path models/sentiment_classifier-logistic-v1.0.0.joblib
+```
+*   **Inputs:**
+    *   Reads `data/processed/test_features.npz` and `data/processed/test_labels.csv`.
+    *   `--model_path`: Path to the trained model file saved in Step 2.
+*   **Outputs:**
+    *   Prints classification report and confusion matrix to the console.
+    *   Saves detailed metrics to `reports/evaluation_metrics.json`.
+
+---
+
+## Parameters
+
+Key parameters for the scripts (e.g., test split ratio, model type) can be passed as command-line arguments as shown above. Default file paths are managed in `src/config.py`.
+*(A `params.yaml` file is included for planned DVC integration, where these parameters will be centrally managed.)*
+
+---
 
 ## CI/CD
 
