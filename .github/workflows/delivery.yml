@@ -5,11 +5,11 @@ on:
     branches: [main]
 
 permissions:
-  contents: write    
+  contents: write
 
 jobs:
-  update-tag:
-    runs-on: ubuntu-24.04
+  build-and-prerelease:
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout full history
@@ -17,73 +17,79 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Get latest tag information
-      id: get_tag_info
-      uses: mathieudutour/github-tag-action@v6.2
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        release_branches:    '_NONE_'
-        pre_release_branches: main
-        default_prerelease_bump: false      
-        default_bump: false
-        append_to_pre_release_tag: pre        
-        tag_prefix: v
-
-    - name: Determine required bump type
-      id: determine_bump
-      run: |
-        PREVIOUS_TAG="${{ steps.get_tag_info.outputs.previous_tag }}"
-        BUMP_TYPE="prepatch"
-
-        if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" == *"-pre"* ]]; then
-          BUMP_TYPE="prerelease"
-          echo "Previous tag '$PREVIOUS_TAG' is a pre-release. Setting bump type to: $BUMP_TYPE"
-        elif [[ -n "$PREVIOUS_TAG" ]]; then
-          echo "Previous tag '$PREVIOUS_TAG' is stable. Setting bump type to default: $BUMP_TYPE"
-        else
-          echo "No previous tag found. Setting bump type to default: $BUMP_TYPE"
-        fi
-
-        echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
-
     - name: Create new pre-release tag
       id: tag_version
       uses: mathieudutour/github-tag-action@v6.2
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        release_branches:    '_NONE_'
+        release_branches: '_NONE_'
         pre_release_branches: main
-        default_prerelease_bump: ${{ steps.determine_bump.outputs.bump_type }}
-        append_to_pre_release_tag: pre
+        default_prerelease_bump: prerelease
+        append_to_pre_release_tag: pre # Example: v1.0.0-patch.pre 
         tag_prefix: v
-    
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
-    
+
     - name: Install dependencies
       run: |
+        python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install git+https://github.com/remla2025-team9/lib-ml.git
+
+    - name: Process data (generate features and split)
+      id: process_data
+      run: |
+        python -m src.dataset
+        ls -l data/processed/
 
     - name: Train model
+      id: train_model
       run: |
-        python src/train.py \
-          --version     ${{ steps.tag_version.outputs.new_tag }} \
-          --output-path models/sentiment_pipeline.joblib
-    
-    - name: Upload artifact
+        MODEL_TYPE="logistic" # Or make this configurable
+        echo "Training model with type: $MODEL_TYPE and version: ${{ steps.tag_version.outputs.new_tag }}"
+        python -m src.modeling.train \
+          --model_type "$MODEL_TYPE" \
+          --model_version "${{ steps.tag_version.outputs.new_tag }}"
+        
+        RAW_VERSION="${{ steps.tag_version.outputs.new_tag }}"
+        # Remove 'v' prefix from tag for filename consistency with train.py script
+        VERSION_NO_V="${RAW_VERSION#v}" 
+        MODEL_FILENAME="sentiment_classifier-${MODEL_TYPE}-v${VERSION_NO_V}.joblib"
+        echo "MODEL_FILE_PATH=models/${MODEL_FILENAME}" >> $GITHUB_ENV
+        echo "Expected model file: models/${MODEL_FILENAME}"
+        ls -l models/
+
+    - name: Evaluate model
+      id: evaluate_model
+      run: |
+        echo "Evaluating model: ${{ env.MODEL_FILE_PATH }}"
+        python -m src.modeling.predict \
+          --model_path "${{ env.MODEL_FILE_PATH }}"
+        echo "Evaluation metrics generated at reports/evaluation_metrics.json"
+        ls -l reports/
+
+    - name: Upload Model Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: sentiment_pipeline-${{ steps.tag_version.outputs.new_tag }}.joblib
-        path: models/sentiment_pipeline-${{ steps.tag_version.outputs.new_tag }}.joblib
+        name: sentiment-classifier-${{ steps.tag_version.outputs.new_tag }}
+        path: ${{ env.MODEL_FILE_PATH }}
 
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
+    - name: Upload Metrics Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: evaluation-metrics-${{ steps.tag_version.outputs.new_tag }}
+        path: reports/evaluation_metrics.json
+
+    - name: Create GitHub Pre-Release
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.tag_version.outputs.new_tag }}
-        files: models/sentiment_pipeline-${{ steps.tag_version.outputs.new_tag }}.joblib
+        name: "Pre-release ${{ steps.tag_version.outputs.new_tag }}"
+        files: |
+          ${{ env.MODEL_FILE_PATH }}
+          reports/evaluation_metrics.json
         prerelease: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
