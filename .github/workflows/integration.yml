@@ -31,7 +31,7 @@ jobs:
         id: process_data
         run: |
           echo "Running data processing..."
-          python -m sentiment_src.dataset
+          python -m src.dataset
           echo "Data processing script finished."
           if [ ! -d "data/processed" ]; then
             echo "Error: Processed data directory not found."
@@ -46,7 +46,7 @@ jobs:
           MODEL_TYPE="logistic"
           
           echo "Running model training with type: $MODEL_TYPE and version: $CI_MODEL_VERSION"
-          python -m sentiment_src.modeling.train \
+          python -m src.modeling.train \
             --model_type "$MODEL_TYPE" \
             --model_version "$CI_MODEL_VERSION"
           echo "Model training script finished."
@@ -68,7 +68,7 @@ jobs:
         id: evaluate_model
         run: |
           echo "Running model evaluation for model: ${{ env.MODEL_FILE_PATH }}"
-          python -m sentiment_src.modeling.predict \
+          python -m src.modeling.predict \
             --model_path "${{ env.MODEL_FILE_PATH }}"
           echo "Model evaluation script finished."
 

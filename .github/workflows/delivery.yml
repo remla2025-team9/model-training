@@ -41,7 +41,7 @@ jobs:
     - name: Process data (generate features and split)
       id: process_data
       run: |
-        python -m sentiment_src.dataset
+        python -m src.dataset
         ls -l data/processed/
 
     - name: Train model
@@ -49,7 +49,7 @@ jobs:
       run: |
         MODEL_TYPE="logistic" # Or make this configurable
         echo "Training model with type: $MODEL_TYPE and version: ${{ steps.tag_version.outputs.new_tag }}"
-        python -m sentiment_src.modeling.train \
+        python -m src.modeling.train \
           --model_type "$MODEL_TYPE" \
           --model_version "${{ steps.tag_version.outputs.new_tag }}"
         
@@ -65,7 +65,7 @@ jobs:
       id: evaluate_model
       run: |
         echo "Evaluating model: ${{ env.MODEL_FILE_PATH }}"
-        python -m sentiment_src.modeling.predict \
+        python -m src.modeling.predict \
           --model_path "${{ env.MODEL_FILE_PATH }}"
         echo "Evaluation metrics generated at reports/evaluation_metrics.json"
         ls -l reports/

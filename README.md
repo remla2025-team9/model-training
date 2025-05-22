@@ -31,13 +31,9 @@ The project follows a structure adapted from the Cookiecutter Data Science templ
 │       ├── __init__.py
 │       ├── train.py     # Model training script
 │       └── predict.py   # Model evaluation script
-├── tests/               # Automated tests (Planned)
 ├── .gitignore           # Files for Git to ignore
-├── params.yaml          # Parameters for pipeline stages (Planned for DVC integration)
-├── pylintrc             # Pylint configuration file
 ├── pyproject.toml       # Project metadata and tool configuration
 ├── requirements.txt     # Python dependencies
-├── Makefile             # (Optional) Makefile for common commands
 └── README.md            # This file
 ```
 
@@ -50,13 +46,7 @@ The project follows a structure adapted from the Cookiecutter Data Science templ
 
 **Installation:**
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <your-repository-url>
-    cd <repository-name>
-    ```
-
-2.  **Install Python dependencies:**
+1.  **Install Python dependencies:**
     It's highly recommended to use a virtual environment:
     ```bash
     python -m venv venv
