@@ -1,4 +1,4 @@
-name: Delivery (Pre-release on Main)
+name: Delivery
 
 on:
   push:

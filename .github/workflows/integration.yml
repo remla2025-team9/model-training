@@ -1,4 +1,4 @@
-name: Integration CI (Simplified)
+name: Integration CI
 
 on:
   pull_request:
