@@ -3,24 +3,34 @@ import joblib
 import pandas as pd
 from scipy.sparse import load_npz
 from src import config
+from pathlib import Path
+
+def get_latest_model_file(models_dir: Path):
+    model_files = list(models_dir.glob("*.joblib"))
+    if not model_files:
+        raise FileNotFoundError(f"No model files found in {models_dir}")
+    model_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+    return model_files[0]
 
 # Load the trained sentiment classification model
 @pytest.fixture(scope="module")
 def trained_model():
-    model_path = config.MODELS_DIR / "sentiment_classifier-logistic-v1.0.0.joblib"
-    model = joblib.load(model_path)
+    model_path = get_latest_model_file(config.MODELS_DIR)
+    model = joblib.load(str(model_path))
     return model
 
 # Load test features, labels, and raw test dataframe
 @pytest.fixture(scope="module")
 def test_data():
-    X_test = load_npz(config.TEST_FEATURES_FILE)              
-    y_test = pd.read_csv(config.TEST_LABELS_FILE)['label']    
-    df_test = pd.read_csv(config.TEST_LABELS_FILE)            
+    X_test = load_npz(config.TEST_FEATURES_FILE)
+    y_test = pd.read_csv(config.TEST_LABELS_FILE)['label']
+    df_test = pd.read_csv(config.TEST_LABELS_FILE)
     return X_test, y_test, df_test
 
 # Helper function to compute accuracy
 def evaluate_accuracy(model, X, y):
+    if hasattr(X, "toarray"):
+        X = X.toarray()
     y_pred = model.predict(X)
     return (y_pred == y).mean()
 
