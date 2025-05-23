@@ -1,0 +1,46 @@
+import pytest
+import joblib
+import pandas as pd
+from scipy.sparse import load_npz
+from src import config
+
+# Load the trained sentiment classification model
+@pytest.fixture(scope="module")
+def trained_model():
+    model_path = config.MODELS_DIR / "sentiment_classifier-logistic-v1.0.0.joblib"
+    model = joblib.load(model_path)
+    return model
+
+# Load test features, labels, and raw test dataframe
+@pytest.fixture(scope="module")
+def test_data():
+    X_test = load_npz(config.TEST_FEATURES_FILE)              
+    y_test = pd.read_csv(config.TEST_LABELS_FILE)['label']    
+    df_test = pd.read_csv(config.TEST_LABELS_FILE)            
+    return X_test, y_test, df_test
+
+# Helper function to compute accuracy
+def evaluate_accuracy(model, X, y):
+    y_pred = model.predict(X)
+    return (y_pred == y).mean()
+
+# Test function: evaluate model accuracy on full dataset and slices
+def test_model_accuracy_overall_and_slices(trained_model, test_data):
+    X_test, y_test, df_test = test_data
+
+    # Overall test accuracy
+    overall_acc = evaluate_accuracy(trained_model, X_test, y_test)
+    print(f"Overall test accuracy: {overall_acc:.3f}")
+    assert overall_acc >= 0.6, "Overall accuracy is below 60%"
+
+    # Accuracy on negative reviews (label = 0)
+    mask_neg = (y_test == 0)
+    neg_acc = evaluate_accuracy(trained_model, X_test[mask_neg], y_test[mask_neg])
+    print(f"Negative review accuracy: {neg_acc:.3f}")
+    assert neg_acc >= 0.6, "Negative review accuracy is below 60%"
+
+    # Accuracy on positive reviews (label = 1)
+    mask_pos = (y_test == 1)
+    pos_acc = evaluate_accuracy(trained_model, X_test[mask_pos], y_test[mask_pos])
+    print(f"Positive review accuracy: {pos_acc:.3f}")
+    assert pos_acc >= 0.6, "Positive review accuracy is below 60%"
