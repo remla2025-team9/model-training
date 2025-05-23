@@ -1,52 +1,40 @@
-import sys
-from pathlib import Path
-import random
 import numpy as np
+import pandas as pd
+import joblib
+from sklearn.metrics import accuracy_score
+from scipy.sparse import load_npz
+from src import config
 import pytest
-import json
-from src.modeling import train, predict
-import src.config as config
 
-NUM_RUNS = 3
+@pytest.fixture
+def load_model():
+    model_path = config.MODELS_DIR / "sentiment_classifier-logistic-v1.0.0.joblib"
+    if not model_path.exists():
+        pytest.skip(f"Model file not found at {model_path}, skipping test.")
+    model = joblib.load(model_path)
+    return model
 
-def set_seeds(seed):
-    random.seed(seed)
-    np.random.seed(seed)
+@pytest.fixture
+def test_data():
+    if not (config.TEST_FEATURES_FILE.exists() and config.TEST_LABELS_FILE.exists()):
+        pytest.skip("Test features or labels file missing, skipping test.")
+    X_test_sparse = load_npz(config.TEST_FEATURES_FILE)
+    y_test = pd.read_csv(config.TEST_LABELS_FILE)['label'].values
+    return X_test_sparse.toarray(), y_test
 
-@pytest.mark.parametrize("run", range(NUM_RUNS))
-def test_model_non_determinism(run):
-    # Skip test if processed train/test feature or label files are missing
-    if not (config.TRAIN_FEATURES_FILE.exists() and config.TRAIN_LABELS_FILE.exists() and
-            config.TEST_FEATURES_FILE.exists() and config.TEST_LABELS_FILE.exists()):
-        pytest.skip("Processed train or test feature files missing, skipping non-determinism test.")
+def test_model_quality_on_negative_slice(load_model, test_data):
+    """
+    Test model accuracy on the negative sentiment slice (label=0).
+    Ensures the model achieves at least 70% accuracy on negative examples.
+    """
+    model = load_model
+    X_test, y_test = test_data
 
-    seed = 42 + run
-    set_seeds(seed)
+    neg_idx = np.where(y_test == 0)[0]
+    X_neg = X_test[neg_idx]
+    y_neg = y_test[neg_idx]
 
-    class Args:
-        model_type = 'logistic'
-        model_version = f"test_run_{run}"
+    y_pred = model.predict(X_neg)
+    acc = accuracy_score(y_neg, y_pred)
 
-    train.main(Args())
-
-    version_str = Args.model_version.lstrip('v')
-    model_filename = f"sentiment_classifier-{Args.model_type}-v{version_str}.joblib"
-    model_path = config.MODELS_DIR / model_filename
-
-    assert model_path.exists(), f"Model file not found: {model_path}"
-
-    class PredictArgs:
-        model_path = str(model_path)
-
-    predict.main(PredictArgs())
-
-    metrics_file = config.EVALUATION_METRICS_FILE
-    assert metrics_file.exists(), "Evaluation metrics file missing"
-
-    with open(metrics_file) as f:
-        metrics = json.load(f)
-
-    accuracy = metrics.get('accuracy', 0)
-    print(f"Run {run}, accuracy: {accuracy}")
-
-    assert 0.5 <= accuracy <= 1.0, f"Run {run} accuracy out of expected range: {accuracy}"
+    assert acc >= 0.7, f"Negative slice accuracy too low: {acc}"

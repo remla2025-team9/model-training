@@ -1,33 +1,86 @@
-import numpy as np
-import pandas as pd
-import pytest
-from src import config
+import subprocess
+import time
+import json
+import psutil
+from pathlib import Path
+from src import config  
 
-def test_train_test_feature_shape_consistency():
+def measure_process_memory(pid):
     """
-    Test consistency of feature dimensions between training and test datasets.
+    Measure the resident set size (RSS) memory usage of a process in MB.
+    Returns None if the process does not exist.
     """
-    if not (config.TRAIN_FEATURES_FILE.exists() and config.TEST_FEATURES_FILE.exists()):
-        pytest.skip("Feature files missing, skipping shape consistency test.")
+    try:
+        p = psutil.Process(pid)
+        mem_info = p.memory_info()
+        return mem_info.rss / (1024 * 1024)  
+    except psutil.NoSuchProcess:
+        return None
 
-    train_data = np.load(config.TRAIN_FEATURES_FILE)["arr_0"]
-    test_data = np.load(config.TEST_FEATURES_FILE)["arr_0"]
-
-    assert train_data.shape[1] == test_data.shape[1], (
-        f"Feature dimension mismatch: train {train_data.shape[1]}, test {test_data.shape[1]}"
-    )
-
-def test_feature_label_alignment():
+def test_training_and_prediction_performance():
     """
-    Test that the number of training samples matches the number of labels.
+    Monitor runtime duration and peak memory usage,
+    and assert that these metrics stay within predefined acceptable thresholds.
     """
-    if not (config.TRAIN_FEATURES_FILE.exists() and config.TRAIN_LABELS_FILE.exists()):
-        pytest.skip("Training feature or label file missing, skipping alignment test.")
-
-    train_features = np.load(config.TRAIN_FEATURES_FILE)["arr_0"]
-    train_labels = pd.read_csv(config.TRAIN_LABELS_FILE)
-
-    assert len(train_features) == len(train_labels), (
-        f"Mismatch between number of training samples and labels: "
-        f"{len(train_features)} features vs {len(train_labels)} labels"
-    )
+    model_type = "logistic"
+    model_version = "1.0.0"
+    model_filename = f"sentiment_classifier-{model_type}-v{model_version}.joblib"
+    model_path = config.MODELS_DIR / model_filename
+    
+    # === Step 1: Measure training time and memory usage ===
+    train_cmd = [
+        "python", "-m", "src.modeling.train",
+        "--model_type", model_type,
+        "--model_version", model_version,
+    ]
+    start_train = time.time()
+    proc_train = subprocess.Popen(train_cmd)
+    
+    # Monitor memory usage during training process every 1 second (simplified)
+    max_train_mem = 0
+    while proc_train.poll() is None:
+        mem = measure_process_memory(proc_train.pid)
+        if mem is not None and mem > max_train_mem:
+            max_train_mem = mem
+        time.sleep(1)
+    end_train = time.time()
+    train_duration = end_train - start_train
+    train_returncode = proc_train.returncode
+    
+    # Assert training process exited successfully
+    assert train_returncode == 0, "Training process failed"
+    
+    
+    # === Step 2: Measure prediction time and memory usage ===
+    predict_cmd = [
+        "python", "-m", "src.modeling.predict",
+        "--model_path", str(model_path)
+    ]
+    start_pred = time.time()
+    proc_pred = subprocess.Popen(predict_cmd)
+    
+    # Monitor memory usage during prediction process every 1 second (simplified)
+    max_pred_mem = 0
+    while proc_pred.poll() is None:
+        mem = measure_process_memory(proc_pred.pid)
+        if mem is not None and mem > max_pred_mem:
+            max_pred_mem = mem
+        time.sleep(1)
+    end_pred = time.time()
+    pred_duration = end_pred - start_pred
+    pred_returncode = proc_pred.returncode
+    
+    # Assert prediction process exited successfully
+    assert pred_returncode == 0, "Prediction process failed"
+    
+    
+    # === Step 3: Set reasonable thresholds to prevent sudden slowdown or memory spikes ===
+    MAX_TRAIN_TIME = 300   # 5 minutes
+    MAX_PRED_TIME = 30     # 30 seconds
+    MAX_TRAIN_MEM = 500    # MB
+    MAX_PRED_MEM = 300     # MB
+    
+    assert train_duration < MAX_TRAIN_TIME, f"Training too slow: {train_duration:.2f}s"
+    assert pred_duration < MAX_PRED_TIME, f"Prediction too slow: {pred_duration:.2f}s"
+    assert max_train_mem < MAX_TRAIN_MEM, f"Training memory too high: {max_train_mem:.2f}MB"
+    assert max_pred_mem < MAX_PRED_MEM, f"Prediction memory too high: {max_pred_mem:.2f}MB"

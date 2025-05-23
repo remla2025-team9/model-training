@@ -1,39 +1,46 @@
-import pytest
-import joblib
-import os
+import subprocess
+import json
 from pathlib import Path
-from sklearn.base import BaseEstimator
 from src import config
-from src.modeling import train
 
-def test_ml_pipeline_train_and_save_model(tmp_path):
-   
-    if not (config.TRAIN_FEATURES_FILE.exists() and config.TRAIN_LABELS_FILE.exists()):
-        pytest.skip("Training data missing, skipping full pipeline integration test.")
+def test_training_and_prediction_pipeline(tmp_path):
+    """
+    Integration Test: Verify the complete training + prediction pipeline runs successfully 
+    and achieves a basic level of accuracy.
+    """
 
-  
-    class Args:
-        model_type = 'nb'
-        model_version = 'test'
+    model_type = "logistic"
+    model_version = "1.0.0"
+    model_filename = f"sentiment_classifier-{model_type}-v{model_version}.joblib"
+    model_path = config.MODELS_DIR / model_filename
 
-    args = Args()
+    # Step 1: Run the training script
+    train_cmd = [
+        "python", "-m", "src.modeling.train",
+        "--model_type", model_type,
+        "--model_version", model_version,
+    ]
+    result_train = subprocess.run(train_cmd, capture_output=True, text=True)
+    assert result_train.returncode == 0, f"Training failed:\n{result_train.stderr}"
 
-   
-    original_models_dir = config.MODELS_DIR
-    config.MODELS_DIR = tmp_path
+    # Step 2: Verify the model file was successfully created
+    assert model_path.exists(), f"Trained model not found at {model_path}"
 
-    try:
-       
-        train.main(args)
+    # Step 3: Run the prediction script
+    predict_cmd = [
+        "python", "-m", "src.modeling.predict",
+        "--model_path", str(model_path)
+    ]
+    result_predict = subprocess.run(predict_cmd, capture_output=True, text=True)
+    assert result_predict.returncode == 0, f"Prediction failed:\n{result_predict.stderr}"
 
-        expected_model_file = tmp_path / f"sentiment_classifier-{args.model_type}-v{args.model_version}.joblib"
-        assert expected_model_file.exists(), "Model file was not saved."
+    # Step 4: Check that the evaluation metrics file exists and load it
+    metrics_file = config.EVALUATION_METRICS_FILE
+    assert metrics_file.exists(), f"Evaluation metrics file not found at {metrics_file}"
 
-       
-        model = joblib.load(expected_model_file)
+    with open(metrics_file, "r") as f:
+        metrics = json.load(f)
 
-        assert isinstance(model, BaseEstimator), "Loaded model is not a scikit-learn estimator."
-
-    finally:
-
-        config.MODELS_DIR = original_models_dir
+    # Step 5: Ensure the accuracy meets a minimum threshold
+    accuracy = metrics["accuracy"]
+    assert accuracy > 0.7, f"Accuracy too low: {accuracy:.2f}"
