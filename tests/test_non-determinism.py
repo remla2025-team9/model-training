@@ -16,7 +16,16 @@ def get_latest_model_file(models_dir: Path):
     return model_files[0]
 
 @pytest.fixture(scope="module")
-def base_model_score():
+def preserve_existing_models():
+    existing_files = set(config.MODELS_DIR.glob("*.joblib"))
+    yield existing_files
+    all_files_after = set(config.MODELS_DIR.glob("*.joblib"))
+    new_files = all_files_after - existing_files
+    for f in new_files:
+        f.unlink()
+
+@pytest.fixture(scope="module")
+def base_model_score(preserve_existing_models):
     train_args = Namespace(model_type='logistic', model_version='stablebase')
     train_main(train_args)
 
@@ -29,11 +38,7 @@ def base_model_score():
     return metrics['accuracy']
 
 @pytest.mark.parametrize("seed", [1, 2, 3, 4, 5])
-def test_model_accuracy_stability(seed, base_model_score):
-    """
-    Test the stability of model accuracy across different random seeds,
-    using the latest model generated each time.
-    """
+def test_model_accuracy_stability(seed, base_model_score, preserve_existing_models):
     version_str = f"stabletest-{seed}"
     train_args = Namespace(model_type='logistic', model_version=version_str)
     train_main(train_args)

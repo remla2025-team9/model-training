@@ -33,7 +33,7 @@ def generate_mutants(texts):
 def repair_mutant(original_text, orig_label, model, processor, max_attempts=5):
     for attempt in range(max_attempts):
         mutant = synonym_replace(original_text)
-        X_mut = processor.transform([mutant])
+        X_mut = processor.transform([mutant]).toarray()
         mut_label = model.predict(X_mut)[0]
         if mut_label == orig_label:
             return mutant, True
@@ -43,9 +43,9 @@ def metamorphic_test(original_texts, model_path, processor_path):
     model = joblib.load(model_path)
     processor = joblib.load(processor_path)
 
-    X_orig = processor.transform(original_texts)
+    X_orig = processor.transform(original_texts).toarray()
     X_mutant_texts = generate_mutants(original_texts)
-    X_mut = processor.transform(X_mutant_texts)
+    X_mut = processor.transform(X_mutant_texts).toarray()
 
     y_orig_pred = model.predict(X_orig)
     y_mut_pred = model.predict(X_mut)
@@ -77,10 +77,12 @@ def test_metamorphic_synonym_invariance():
         "I feel happy about this service.",
         "The movie was bad and boring."
     ]
+
     model_path = get_latest_model_file(config.MODELS_DIR)
-    processor_path = config.VECTORIZERS_DIR
+    processor_path = "vectorizers/preprocessor.joblib"
 
     mismatches, repaired = metamorphic_test(texts, model_path, processor_path)
 
-    # Ensure all mismatches are repaired
     assert len(mismatches) == 0, f"{len(mismatches)} samples could not be repaired"
+
+
