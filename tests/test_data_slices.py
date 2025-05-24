@@ -1,6 +1,7 @@
 import pytest
 import joblib
 import pandas as pd
+import numpy as np
 from scipy.sparse import load_npz
 from src import config
 from pathlib import Path
@@ -44,13 +45,13 @@ def test_model_accuracy_overall_and_slices(trained_model, test_data):
     assert overall_acc >= 0.6, "Overall accuracy is below 60%"
 
     # Accuracy on negative reviews (label = 0)
-    mask_neg = (y_test == 0)
-    neg_acc = evaluate_accuracy(trained_model, X_test[mask_neg], y_test[mask_neg])
+    neg_indices = np.where((y_test == 0).to_numpy())[0]
+    neg_acc = evaluate_accuracy(trained_model, X_test[neg_indices], y_test.iloc[neg_indices])
     print(f"Negative review accuracy: {neg_acc:.3f}")
     assert neg_acc >= 0.6, "Negative review accuracy is below 60%"
 
     # Accuracy on positive reviews (label = 1)
-    mask_pos = (y_test == 1)
-    pos_acc = evaluate_accuracy(trained_model, X_test[mask_pos], y_test[mask_pos])
+    pos_indices = np.where((y_test == 1).to_numpy())[0]
+    pos_acc = evaluate_accuracy(trained_model, X_test[pos_indices], y_test.iloc[pos_indices])
     print(f"Positive review accuracy: {pos_acc:.3f}")
     assert pos_acc >= 0.6, "Positive review accuracy is below 60%"
