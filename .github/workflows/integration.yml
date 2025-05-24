@@ -48,13 +48,15 @@ jobs:
           echo "Running model training with type: $MODEL_TYPE and version: $CI_MODEL_VERSION"
           python -m src.modeling.train \
             --model_type "$MODEL_TYPE" \
-            --model_version "$CI_MODEL_VERSION"
+
           echo "Model training script finished."
 
           RAW_VERSION="$CI_MODEL_VERSION"
           # Remove 'v' prefix from tag for filename consistency if train.py does this
           VERSION_NO_V="${RAW_VERSION#v}"
           MODEL_FILENAME="sentiment_classifier-${MODEL_TYPE}-v${VERSION_NO_V}.joblib"
+
+          mv models/model.joblib models/${MODEL_FILENAME}
           echo "MODEL_FILE_PATH=models/${MODEL_FILENAME}" >> $GITHUB_ENV # Save for evaluation step
 
 

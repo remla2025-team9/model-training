@@ -51,12 +51,13 @@ jobs:
         echo "Training model with type: $MODEL_TYPE and version: ${{ steps.tag_version.outputs.new_tag }}"
         python -m src.modeling.train \
           --model_type "$MODEL_TYPE" \
-          --model_version "${{ steps.tag_version.outputs.new_tag }}"
         
         RAW_VERSION="${{ steps.tag_version.outputs.new_tag }}"
         # Remove 'v' prefix from tag for filename consistency with train.py script
         VERSION_NO_V="${RAW_VERSION#v}" 
         MODEL_FILENAME="sentiment_classifier-${MODEL_TYPE}-v${VERSION_NO_V}.joblib"
+
+        mv models/model.joblib models/${MODEL_FILENAME}
         echo "MODEL_FILE_PATH=models/${MODEL_FILENAME}" >> $GITHUB_ENV
         echo "Expected model file: models/${MODEL_FILENAME}"
         ls -l models/
