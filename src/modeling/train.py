@@ -38,8 +38,7 @@ def main(args):
     clf.fit(X_train_dense, y_train)
     logger.info("Model training complete.")
 
-    version_str = args.model_version.lstrip('v')
-    model_filename = f"sentiment_classifier-{args.model_type}-v{version_str}.joblib"
+    model_filename = f"model.joblib"
     output_path = config.MODELS_DIR / model_filename # Use Path object from config
     
     joblib.dump(clf, output_path)
@@ -49,8 +48,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train a sentiment analysis classifier.')
     parser.add_argument('--model_type', choices=['nb', 'logistic'], default='nb',
                         help='Classifier type: GaussianNB or LogisticRegression.')
-    parser.add_argument('--model_version', type=str, required=True,
-                        help="Model version string (e.g., 1.0.0) for the output filename.")
     
     parsed_args = parser.parse_args() # Parse arguments
     
