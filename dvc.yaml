@@ -1,3 +1,6 @@
+metrics:
+  - reports/evaluation_metrics.json
+
 stages:
   prepare:
     cmd: python -m src.dataset
