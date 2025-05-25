@@ -52,6 +52,7 @@ jobs:
         echo "Running DVC pipeline..."
         dvc repro
         echo "DVC pipeline completed."
+        dvc push
 
         echo "MODEL_FILE_PATH=models/model.joblib" >> $GITHUB_ENV
 
