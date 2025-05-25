@@ -188,3 +188,11 @@ model = joblib.load(local_path)
 ```
 ### 2. From a local file
 It is also possible to load the model from a local file, either by cloning the repo and following the steps above to train and generate the model, or by downloading the model file directly from the GitHub release page.
+
+## How to Run Tests with Coverage Reporting
+
+You can run the test suite with coverage measurement using the following command:
+
+```bash
+pytest --cov=src tests/
+```
