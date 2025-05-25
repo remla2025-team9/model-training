@@ -14,6 +14,8 @@ stages:
     - data/processed/train_labels.csv
     - data/processed/test_features.npz
     - data/processed/test_labels.csv
+    - vectorizers/preprocessor.joblib
+    - vectorizers/preprocessed_data.joblib
   train:
     cmd: python -m src.modeling.train --model_type logistic
     deps:
