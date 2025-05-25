@@ -1,0 +1,117 @@
+name: Automated Testing Workflow
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+    python-tests:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout code
+            uses: actions/checkout@v4
+
+          - name: Set up Python
+            uses: actions/setup-python@v5
+            with:
+              python-version: '3.10'
+
+          - name: Install dependencies
+            run: |
+              python -m pip install --upgrade pip
+              pip install -r requirements.txt
+        
+          - name: Run data processing
+            id: process_data
+            run: |
+              python -m src.dataset
+              echo "Data processing completed. Processed files:"
+              ls -l data/processed/
+        
+          - name: Train model (Testing run)
+            id: train_model
+            run: |
+                CI_MODEL_VERSION="ci-${{ github.run_id }}"
+                MODEL_TYPE="logistic"
+                
+                echo "Running model training with type: $MODEL_TYPE and version: $CI_MODEL_VERSION"
+                python -m src.modeling.train \
+                    --model_type "$MODEL_TYPE" \
+                    --model_version "$CI_MODEL_VERSION"
+                echo "Model training script finished."
+
+                RAW_VERSION="$CI_MODEL_VERSION"
+                # Remove 'v' prefix from tag for filename consistency if train.py does this
+                VERSION_NO_V="${RAW_VERSION#v}"
+                MODEL_FILENAME="sentiment_classifier-${MODEL_TYPE}-v${VERSION_NO_V}.joblib"
+                echo "MODEL_FILE_PATH=models/${MODEL_FILENAME}" >> $GITHUB_ENV # Save for evaluation step
+
+
+                if [ ! -f "models/${MODEL_FILENAME}" ]; then
+                    echo "Error: Trained model file 'models/${MODEL_FILENAME}' not found."
+                    exit 1
+                fi
+                ls -l models/ # Log contents for debugging
+          - name: Evaluate model (CI run)
+            id: evaluate_model
+            run: |
+                echo "Running model evaluation for model: ${{ env.MODEL_FILE_PATH }}"
+                python -m src.modeling.predict \
+                    --model_path "${{ env.MODEL_FILE_PATH }}"
+                echo "Model evaluation script finished."
+
+                if [ ! -f "reports/evaluation_metrics.json" ]; then
+                    echo "Error: Evaluation metrics file 'reports/evaluation_metrics.json' not found."
+                    ls -l reports/
+                    exit 1
+                fi
+                echo "Evaluation metrics file found: reports/evaluation_metrics.json"
+                ls -l reports/
+
+          - name: Run tests
+            run: |
+              pytest tests/ --cov=src --cov-report=term --cov-report=html > pytest-coverage.txt
+
+          - name: Update README with test and coverage summary
+            run: |
+              SUMMARY=$(tail -n 15 pytest-coverage.txt)
+              
+              awk -v summary="$SUMMARY" '
+                BEGIN {print_section=1}
+                /<!-- coverage-start -->/ {
+                  print
+                  print summary
+                  print_section=0
+                  next
+                }
+                /<!-- coverage-end -->/ {
+                  print_section=1
+                  print
+                  next
+                }
+                print_section {print}
+              ' README.md > README.tmp && mv README.tmp README.md
+              cat README.md
+          # - name: Commit and push README update
+          #   run: |
+          #     git config --global user.name "github-actions"
+          #     git config --global user.email "github-actions@github.com"
+          #     git add README.md
+          #     git commit -m "Update test coverage in README [CI skip]" || echo "No changes to commit"
+          #     git push
+            
+          - name: Insert test adequacy metrics into README
+            run: |
+              python .github/scripts/update_readme_metrics.py
+              cat README.md
+          
+          # - name: Commit and push updated README
+          #   run: |
+          #     git config --global user.name "github-actions"
+          #     git config --global user.email "github-actions@github.com"
+          #     git add README.md
+          #     git commit -m "Update test adequacy metrics in README [CI skip]" || echo "No changes to commit"
+          #     git push origin main
+

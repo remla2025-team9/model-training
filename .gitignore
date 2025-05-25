@@ -188,3 +188,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Model files
+models/*.joblib
+
+# vectorizer files
+vectorizers/*.joblib

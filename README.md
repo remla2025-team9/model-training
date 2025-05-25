@@ -178,3 +178,12 @@ You can run the test suite with coverage measurement using the following command
 ```bash
 pytest --cov=src tests/
 ```
+## Coverage Report
+<!-- coverage-start -->
+(old summary will be replaced)
+<!-- coverage-end -->
+
+## 🧪 Test Adequacy Metrics
+<!-- adequacy-start -->
+(old metrics will be replaced)
+<!-- adequacy-end -->
