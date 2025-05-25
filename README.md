@@ -62,6 +62,24 @@ The project follows a structure adapted from the Cookiecutter Data Science templ
 
 ---
 
+## Usage - Running the Pipeline with DVC
+The pipeline is designed to be run using DVC (Data Version Control) for managing data and model artifacts. This allows for reproducibility and versioning of datasets and models.
+
+### Prerequisites for DVC
+*   Install AWS CLI and configure your credentials for the S3 remote storage.
+
+*   Install DVC by setting up the python virtual environment as described above
+
+*   Initialize DVC in the project directory:
+    ```bash
+    dvc pull
+    ```
+
+*   Run the pipeline using DVC:
+    ```bash
+    dvc repro
+    ```
+
 ## Usage - Running the Pipeline Manually
 
 Currently, the pipeline stages are run as individual Python scripts in sequence. DVC integration for automated pipeline management is planned for a future update.
