@@ -9,8 +9,11 @@ stages:
       size: 55587
     - path: src/dataset.py
       hash: md5
-      md5: 11042b0a90673f79ba333baa6be54960
-      size: 2886
+      md5: 80bd3a0ea92c36b6ea345e466aa8c459
+      size: 2883
+    params:
+      params.yaml:
+        prepare.test_size: 0.2
     outs:
     - path: data/processed/test_features.npz
       hash: md5

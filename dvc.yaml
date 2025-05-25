@@ -4,6 +4,8 @@ metrics:
 stages:
   prepare:
     cmd: python -m src.dataset
+    params:
+      - prepare.test_size
     deps:
     - data/raw/training_data.tsv
     - src/dataset.py

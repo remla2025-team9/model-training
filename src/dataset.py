@@ -7,6 +7,8 @@ from sentiment_analysis_preprocessing.preprocess import preprocess
 
 from . import config
 
+import dvc.api
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -19,7 +21,7 @@ def load_and_generate_features(raw_data_path, text_col, label_col, sep='\t', quo
     logger.info(f"Generated features of shape {corpus_features.shape} and {len(labels)} labels.")
     return corpus_features, labels
 
-def main(args):
+def main(args, test_size=0.2):
     config.PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     X_features, y_labels = load_and_generate_features(
@@ -28,9 +30,9 @@ def main(args):
         label_col=args.label_col
     )
 
-    logger.info(f"Splitting features and labels with test_size={args.test_size}")
+    logger.info(f"Splitting features and labels with test_size={test_size}")
     X_train, X_test, y_train, y_test = train_test_split(
-        X_features, y_labels, test_size=args.test_size, random_state=args.random_state
+        X_features, y_labels, test_size=test_size, random_state=args.random_state
     )
     logger.info(f"Train features shape: {X_train.shape}, Test features shape: {X_test.shape}")
 
@@ -45,8 +47,9 @@ def main(args):
     logger.info("Data processing complete.")
 
 if __name__ == '__main__':
+    params = dvc.api.params_show()
+
     parser = argparse.ArgumentParser(description='Load raw data, generate features, split, and save.')
-    parser.add_argument('--test_size', type=float, default=0.2, help='Fraction of data for test split.')
     parser.add_argument('--random_state', type=int, default=42, help='Random state for splitting.')
     parser.add_argument('--raw_data_path', type=str, default=str(config.DEFAULT_RAW_DATA_FILE),
                         help='Path to the raw TSV data file (overrides config).')
@@ -55,4 +58,4 @@ if __name__ == '__main__':
     
     parsed_args = parser.parse_args()
         
-    main(parsed_args)
+    main(parsed_args, test_size=params['prepare']['test_size'])
