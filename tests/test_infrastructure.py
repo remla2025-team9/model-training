@@ -2,51 +2,38 @@ import subprocess
 import json
 from src import config
 
-def test_training_and_prediction_pipeline():
+def test_dvc_pipeline_produces_valid_model_and_metrics():
     """
-    Integration Test: Verify the complete training + prediction pipeline runs successfully 
-    and achieves a basic level of accuracy.
+    Integration Test: Run the DVC pipeline and verify it produces a valid model and metrics.
     """
 
-    model_type = "logistic"
-    model_version = "1.0.0"
-    model_filename = f"sentiment_classifier-{model_type}-v{model_version}.joblib"
-    model_path = config.MODELS_DIR / model_filename
+    # Dynamically find the first .joblib model in the models directory
+    joblib_files = list(config.MODELS_DIR.glob("*.joblib"))
+    assert joblib_files, f"No .joblib model files found in {config.MODELS_DIR}"
+    model_path = joblib_files[0]
+
     metrics_file = config.EVALUATION_METRICS_FILE
 
     try:
-        # Step 1: Run the training script
-        train_cmd = [
-            "python", "-m", "src.modeling.train",
-            "--model_type", model_type,
-            "--model_version", model_version,
-        ]
-        result_train = subprocess.run(train_cmd, capture_output=True, text=True)
-        assert result_train.returncode == 0, f"Training failed:\n{result_train.stderr}"
+        # Run the full DVC pipeline
+        result = subprocess.run(["dvc", "repro", "--force"], capture_output=True, text=True)
+        assert result.returncode == 0, f"DVC pipeline failed:\n{result.stderr}"
 
-        # Step 2: Verify the model file was successfully created
+        # Verify model exists
         assert model_path.exists(), f"Trained model not found at {model_path}"
 
-        # Step 3: Run the prediction script
-        predict_cmd = [
-            "python", "-m", "src.modeling.predict",
-            "--model_path", str(model_path)
-        ]
-        result_predict = subprocess.run(predict_cmd, capture_output=True, text=True)
-        assert result_predict.returncode == 0, f"Prediction failed:\n{result_predict.stderr}"
-
-        # Step 4: Check that the evaluation metrics file exists and load it
+        # Verify evaluation metrics file exists and is valid
         assert metrics_file.exists(), f"Evaluation metrics file not found at {metrics_file}"
 
         with open(metrics_file, "r") as f:
             metrics = json.load(f)
 
-        # Step 5: Ensure the accuracy meets a minimum threshold
-        accuracy = metrics["accuracy"]
+        # Check accuracy
+        accuracy = metrics.get("accuracy", 0)
         assert accuracy > 0.6, f"Accuracy too low: {accuracy:.2f}"
 
     finally:
-        # Cleanup: remove the generated files if they exist
+        # Optional: Clean up generated files if needed
         if model_path.exists():
             model_path.unlink()
         if metrics_file.exists():

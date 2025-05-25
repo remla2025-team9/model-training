@@ -46,36 +46,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Process data
-        id: process_data
+      - name: DVC pull
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          python -m src.dataset
-          ls -l data/processed/
+          echo "Pulling DVC data..."
+          dvc pull
+          echo "DVC pull completed."
+      
+      - name: Run DVC pipeline
+        run: |
+          echo "Running DVC pipeline..."
+          dvc repro
+          echo "DVC pipeline completed."
+          dvc push
 
-      - name: Train model
-        id: train_model
-        run: |
-          MODEL_TYPE="logistic" # Or make this configurable via workflow inputs
-          echo "Training model with type: $MODEL_TYPE and version: ${{ steps.tag_version.outputs.new_tag }}"
-          python -m src.modeling.train \
-            --model_type "$MODEL_TYPE" \
-            --model_version "${{ steps.tag_version.outputs.new_tag }}"
-          
-          RAW_VERSION="${{ steps.tag_version.outputs.new_tag }}"
-          VERSION_NO_V="${RAW_VERSION#v}" 
-          MODEL_FILENAME="sentiment_classifier-${MODEL_TYPE}-v${VERSION_NO_V}.joblib"
-          echo "MODEL_FILE_PATH=models/${MODEL_FILENAME}" >> $GITHUB_ENV
-          echo "Expected model file: models/${MODEL_FILENAME}"
-          ls -l models/
-
-      - name: Evaluate model
-        id: evaluate_model
-        run: |
-          echo "Evaluating model: ${{ env.MODEL_FILE_PATH }}"
-          python -m src.modeling.predict \
-            --model_path "${{ env.MODEL_FILE_PATH }}"
-          echo "Evaluation metrics generated at reports/evaluation_metrics.json"
-          ls -l reports/
+          echo "MODEL_FILE_PATH=models/model.joblib" >> $GITHUB_ENV
       
       - name: Upload Model Artifact (for CI records)
         uses: actions/upload-artifact@v4
