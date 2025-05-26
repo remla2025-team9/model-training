@@ -3,7 +3,7 @@ name: Automated Testing Workflow
 on:
   push:
     branches:
-      - continuous-training
+      - main
   pull_request:
     branches:
       - main
