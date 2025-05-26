@@ -27,55 +27,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Process data (CI run)
-        id: process_data
+      - name: Run pylint
+        run: pylint src/
+
+      - name: Run flake8
+        run: flake8 src/
+
+      - name: Run bandit
+        run: bandit -r src/
+
+      - name: DVC pull
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          echo "Running data processing..."
-          python -m src.dataset
-          echo "Data processing script finished."
-          if [ ! -d "data/processed" ]; then
-            echo "Error: Processed data directory not found."
-            exit 1
-          fi
-          ls -l data/processed/
-
-      - name: Train model (CI run)
-        id: train_model
+          echo "Pulling DVC data..."
+          dvc pull
+          echo "DVC pull completed."
+      
+      - name: Run DVC pipeline
         run: |
-          CI_MODEL_VERSION="ci-${{ github.run_id }}"
-          MODEL_TYPE="logistic"
-          
-          echo "Running model training with type: $MODEL_TYPE and version: $CI_MODEL_VERSION"
-          python -m src.modeling.train \
-            --model_type "$MODEL_TYPE" \
-            --model_version "$CI_MODEL_VERSION"
-          echo "Model training script finished."
-
-          RAW_VERSION="$CI_MODEL_VERSION"
-          # Remove 'v' prefix from tag for filename consistency if train.py does this
-          VERSION_NO_V="${RAW_VERSION#v}"
-          MODEL_FILENAME="sentiment_classifier-${MODEL_TYPE}-v${VERSION_NO_V}.joblib"
-          echo "MODEL_FILE_PATH=models/${MODEL_FILENAME}" >> $GITHUB_ENV # Save for evaluation step
-
-
-          if [ ! -f "models/${MODEL_FILENAME}" ]; then
-            echo "Error: Trained model file 'models/${MODEL_FILENAME}' not found."
-            exit 1
-          fi
-          ls -l models/ # Log contents for debugging
-
-      - name: Evaluate model (CI run)
-        id: evaluate_model
-        run: |
-          echo "Running model evaluation for model: ${{ env.MODEL_FILE_PATH }}"
-          python -m src.modeling.predict \
-            --model_path "${{ env.MODEL_FILE_PATH }}"
-          echo "Model evaluation script finished."
-
-          if [ ! -f "reports/evaluation_metrics.json" ]; then
-            echo "Error: Evaluation metrics file 'reports/evaluation_metrics.json' not found."
-            ls -l reports/
-            exit 1
-          fi
-          echo "Evaluation metrics file found: reports/evaluation_metrics.json"
-          ls -l reports/
+          echo "Running DVC pipeline..."
+          dvc repro
+          echo "DVC pipeline completed."

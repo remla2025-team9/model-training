@@ -62,6 +62,24 @@ The project follows a structure adapted from the Cookiecutter Data Science templ
 
 ---
 
+## Usage - Running the Pipeline with DVC
+The pipeline is designed to be run using DVC (Data Version Control) for managing data and model artifacts. This allows for reproducibility and versioning of datasets and models.
+
+### Prerequisites for DVC
+*   Install AWS CLI and configure your credentials for the S3 remote storage.
+
+*   Install DVC by setting up the python virtual environment as described above
+
+*   Initialize DVC in the project directory:
+    ```bash
+    dvc pull
+    ```
+
+*   Run the pipeline using DVC:
+    ```bash
+    dvc repro
+    ```
+
 ## Usage - Running the Pipeline Manually
 
 Currently, the pipeline stages are run as individual Python scripts in sequence. DVC integration for automated pipeline management is planned for a future update.
@@ -71,7 +89,7 @@ Currently, the pipeline stages are run as individual Python scripts in sequence.
 This script loads the raw data, uses an external library for text preprocessing to generate features, splits the data into training and test sets, and saves the processed features and labels.
 
 ```bash
-python -m src.dataset --test_size 0.2
+python -m src.dataset
 ```
 *   **Inputs:** Reads from `data/raw/training_data.tsv` (or as specified by `--raw_data_path` argument or `src/config.py`).
 *   **Outputs:**
@@ -85,20 +103,19 @@ python -m src.dataset --test_size 0.2
 This script loads the processed training features and labels, trains a classifier, and saves the trained model.
 
 ```bash
-python -m src.modeling.train --model_type logistic --model_version 1.0.0
+python -m src.modeling.train --model_type logistic
 ```
 *   **Inputs:** Reads `data/processed/train_features.npz` and `data/processed/train_labels.csv`.
 *   **Parameters:**
     *   `--model_type`: Choose 'nb' (Gaussian Naive Bayes) or 'logistic' (Logistic Regression).
-    *   `--model_version`: Specify a version for the output model file (e.g., '1.0.0').
-*   **Outputs:** Saves the trained model to `models/sentiment_classifier-<model_type>-v<model_version>.joblib` (e.g., `models/sentiment_classifier-logistic-v1.0.0.joblib`).
+*   **Outputs:** Saves the trained model to `models/model.joblib`
 
 **Step 3: Model Evaluation**
 
 This script loads the processed test features and labels, loads a trained model, makes predictions, and saves evaluation metrics.
 
 ```bash
-python -m src.modeling.predict --model_path models/sentiment_classifier-logistic-v1.0.0.joblib
+python -m src.modeling.predict --model_path models/model.joblib
 ```
 *   **Inputs:**
     *   Reads `data/processed/test_features.npz` and `data/processed/test_labels.csv`.

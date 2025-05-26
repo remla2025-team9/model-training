@@ -1,0 +1,36 @@
+metrics:
+  - reports/evaluation_metrics.json
+
+stages:
+  prepare:
+    cmd: python -m src.dataset
+    params:
+      - prepare.test_size
+    deps:
+    - data/raw/training_data.tsv
+    - src/dataset.py
+    outs:
+    - data/processed/train_features.npz
+    - data/processed/train_labels.csv
+    - data/processed/test_features.npz
+    - data/processed/test_labels.csv
+    - vectorizers/preprocessor.joblib
+    - vectorizers/preprocessed_data.joblib
+  train:
+    cmd: python -m src.modeling.train --model_type logistic
+    deps:
+    - data/processed/train_features.npz
+    - data/processed/train_labels.csv
+    - src/modeling/train.py
+    outs:
+    - models/model.joblib
+  evaluate:
+    cmd: python -m src.modeling.predict --model_path models/model.joblib
+    deps:
+    - models/model.joblib
+    - data/processed/test_features.npz
+    - data/processed/test_labels.csv
+    - src/modeling/predict.py
+    outs:
+    - reports/evaluation_metrics.json
+

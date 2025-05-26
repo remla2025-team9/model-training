@@ -1,7 +1,8 @@
+"""Configuration parameters and default file paths."""
 from pathlib import Path
 
 # Project Root
-ROOT_DIR = Path(__file__).resolve().parent.parent 
+ROOT_DIR = Path(__file__).resolve().parent.parent
 
 # Data paths
 RAW_DATA_DIR = ROOT_DIR / "data" / "raw"
