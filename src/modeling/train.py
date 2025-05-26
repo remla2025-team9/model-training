@@ -4,6 +4,7 @@ import joblib
 from sklearn.linear_model import LogisticRegression
 from src.dataset import split_train_test  # adjust as needed for your import style
 
+
 def train_model(df, test_size=0.2, random_state=42):
     """
     Train the sentiment analysis model on the training dataset.
