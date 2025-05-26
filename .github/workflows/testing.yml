@@ -78,28 +78,11 @@ jobs:
 
           - name: Run tests
             run: |
-              pytest tests/ --cov=src --cov-report=term --cov-report=html > pytest-coverage.txt
-
-          - name: Update README with test and coverage summary
+              pytest tests/ --cov=src --cov-report=term > pytest-coverage.txt
+          
+          - name: Format and insert coverage as Markdown table
             run: |
-              SUMMARY=$(tail -n 15 pytest-coverage.txt)
-              
-              awk -v summary="$SUMMARY" '
-                BEGIN {print_section=1}
-                /<!-- coverage-start -->/ {
-                  print
-                  print summary
-                  print_section=0
-                  next
-                }
-                /<!-- coverage-end -->/ {
-                  print_section=1
-                  print
-                  next
-                }
-                print_section {print}
-              ' README.md > README.tmp && mv README.tmp README.md
-              cat README.md
+              python .github/scripts/update_readme_coverage.py
             
           - name: Insert test adequacy metrics into README
             run: |
