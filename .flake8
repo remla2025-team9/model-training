@@ -1,3 +1,4 @@
 [flake8]
-max-line-length = 120
+max-line-length = 110
 exclude = tests,__init__.py
+plugins = plugin.ml_code_smells_checker
