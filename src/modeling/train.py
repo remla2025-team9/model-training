@@ -14,4 +14,12 @@ def train_model(df, test_size=0.2, random_state=42):
         test_size=test_size,
         random_state=random_state
     )
-    …
+
+    model = LogisticRegression(random_state=random_state)
+    model.fit(x_train, y_train)
+    joblib.dump(model, "model.joblib")
+
+    logger = __import__("logging").getLogger(__name__)
+    logger.info("Model training complete")
+
+    return model
