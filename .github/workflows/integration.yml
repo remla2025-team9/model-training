@@ -27,6 +27,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Run pylint
+        run: pylint src/
+
+      - name: Run flake8
+        run: flake8 src/
+
+      - name: Run bandit
+        run: bandit -r src/
+
       - name: DVC pull
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
