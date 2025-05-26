@@ -1,4 +1,4 @@
-"""Training routines for the sentiment classification model."""
+"""Training for the sentiment classification model."""
 
 import argparse
 import logging
