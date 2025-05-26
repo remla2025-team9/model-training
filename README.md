@@ -187,3 +187,8 @@ pytest --cov=src tests/
 <!-- adequacy-start -->
 (old metrics will be replaced)
 <!-- adequacy-end -->
+
+## Linting Score
+<!-- pylint-start -->
+![Pylint Score](pylint_score.svg)
+<!-- pylint-end -->

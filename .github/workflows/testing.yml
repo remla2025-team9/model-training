@@ -115,3 +115,27 @@ jobs:
           #     git commit -m "Update test adequacy metrics in README [CI skip]" || echo "No changes to commit"
           #     git push origin main
 
+          - name: Run pylint and capture score and generate badge
+            run: |
+              pylint src/ > pylint_output.txt || true
+              cat pylint_output.txt
+
+              SCORE=$(grep -oP 'rated at \K[0-9]+\.[0-9]+' pylint_output.txt | tail -1)
+              echo "Pylint score is $SCORE"
+              anybadge -v "$SCORE" \
+                -l pylint \
+                -f pylint_score.svg 7=orange 8=yellow 9=green
+
+          # - name: Generate pylint badge
+          #   run: |
+          #     anybadge -v $SCORE \
+          #       -l pylint \
+          #       -f pylint_score.svg 7=orange 8=yellow 9=green
+          
+          # - name: Commit pylint badge
+          #   run: |
+          #     git config --global user.name "github-actions"
+          #     git config --global user.email "github-actions@github.com"
+          #     git add pylint_score.svg README.md
+          #     git commit -m "Update pylint badge [CI skip]" || echo "No changes to commit"
+          #     git push origin main
