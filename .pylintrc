@@ -181,4 +181,5 @@ logging-format-style=old
 logging-modules=logging
 
 # Custom MIL-Specific Smell Checker Plugin placeholder
-load-plugins=
+load-plugins=plugins.ml_code_smells_checker
+
