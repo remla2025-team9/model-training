@@ -1,4 +1,5 @@
 name: Automated Testing Workflow
+
 on:
   push:
     branches:
@@ -11,7 +12,10 @@ on:
       - 'README.md'
       - 'docs/**'
       - '*.md'
-  workflow_dispatch:
+
+permissions:
+  contents: write
+
 jobs:
     python-tests:
         runs-on: ubuntu-latest
