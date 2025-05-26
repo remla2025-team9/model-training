@@ -42,7 +42,7 @@ jobs:
               echo "Pylint score is $SCORE"
               anybadge -v "$SCORE" \
                 -l pylint \
-                -f pylint_score.svg 7=orange 8=yellow 9=green
+                -f pylint_score.svg 7=orange 8=yellow 9=green --overwrite
           
           # - name: Run bandit and capture score and generate badge
           #   run: |
