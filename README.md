@@ -195,3 +195,39 @@ You can run the test suite with coverage measurement using the following command
 ```bash
 pytest --cov=src tests/
 ```
+## Coverage Report
+<!-- coverage-start -->
+
+Name                       Stmts   Miss  Cover
+----------------------------------------------
+src/__init__.py                1      0   100%
+src/config.py                 13      0   100%
+src/dataset.py                60      4    93%
+src/features.py                0      0   100%
+src/modeling/__init__.py       0      0   100%
+src/modeling/predict.py       48      7    85%
+src/modeling/train.py         40      6    85%
+src/plots.py                   0      0   100%
+----------------------------------------------
+TOTAL                        162     17    90%
+Coverage HTML written to dir htmlcov
+============================= 16 passed in 23.14s ==============================
+<!-- coverage-end -->
+
+## 🧪 Test Adequacy Metrics
+<!-- adequacy-start -->
+| Metric               | Value   |
+|----------------------|---------|
+| Accuracy             | 0.7556  |
+| Precision (weighted) | 0.7563  |
+| Recall (weighted)    | 0.7556  |
+| F1 Score (weighted)  | 0.7536  |
+
+<details>
+<summary>Confusion Matrix</summary>
+[[55, 27], [17, 81]]
+</details>
+<!-- adequacy-end -->
+
+## Linting Scores
+![Pylint Score](pylint_score.svg)

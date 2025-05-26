@@ -1,0 +1,98 @@
+name: Automated Testing Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '.github/**'
+      - 'README.md'
+      - 'docs/**'
+      - '*.md'
+
+permissions:
+  contents: write
+
+jobs:
+    python-tests:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout code
+            uses: actions/checkout@v4
+
+          - name: Set up Python
+            uses: actions/setup-python@v5
+            with:
+              python-version: '3.10'
+
+          - name: Install dependencies
+            run: |
+              python -m pip install --upgrade pip
+              pip install -r requirements.txt
+          
+          - name: Run pylint and capture score and generate badge
+            run: |
+              pylint src/ > pylint_output.txt || true
+              cat pylint_output.txt
+
+              SCORE=$(grep -oP 'rated at \K[0-9]+\.[0-9]+' pylint_output.txt | tail -1)
+              echo "Pylint score is $SCORE"
+              anybadge -v "$SCORE" \
+                -l pylint \
+                -f pylint_score.svg --overwrite "7=orange" "8=yellow" "9=green"
+          
+          # - name: Run bandit and capture score and generate badge
+          #   run: |
+          #     bandit -r src/ -f json -o bandit_output.json || true
+          #     cat bandit_output.json
+
+          #     BANDIT_SCORE=$(jq '.results | length' bandit_output.json)
+          #     echo "Bandit score is $BANDIT_SCORE"
+          #     anybadge -v "$BANDIT_SCORE" \
+          #       -l bandit \
+          #       -f bandit_score.svg 0=green 1=yellow 2=orange 3=red
+
+          - name: DVC pull
+            env:
+              AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            run: |
+              echo "Pulling DVC data..."
+              dvc pull
+              echo "DVC pull completed."
+          
+          - name: Run DVC pipeline
+            env:
+              AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            run: |
+              echo "Running DVC pipeline..."
+              dvc repro
+              echo "DVC pipeline completed."
+              dvc push
+
+              echo "MODEL_FILE_PATH=models/model.joblib" >> $GITHUB_ENV
+
+          - name: Run tests
+            run: |
+              pytest tests/ --cov=src --cov-report=term > pytest-coverage.txt
+          
+          - name: Format and insert coverage as Markdown table
+            run: |
+              python .github/scripts/update_readme_coverage.py
+            
+          - name: Insert test adequacy metrics into README
+            run: |
+              python .github/scripts/update_readme_metrics.py
+              cat README.md
+          
+          - name: Commit and push updated README
+            run: |
+              git config --global user.name "github-actions"
+              git config --global user.email "github-actions@github.com"
+              git add pylint_score.svg README.md
+              git commit -m "Update test adequacy metrics, coverage and badges in README [CI skip]" || echo "No changes to commit"
+              git push origin ${{ github.ref_name }}
