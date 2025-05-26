@@ -1,4 +1,5 @@
-# sentiment_src/modeling/train.py
+"""Training routines for the sentiment classification model."""
+
 import argparse
 import logging
 import joblib
