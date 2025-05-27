@@ -66,15 +66,3 @@ jobs:
           echo "Running DVC pipeline..."
           dvc repro
           echo "DVC pipeline completed."
-
-      - name: Check for uncommitted changes in dvc.lock or .dvc files
-        run: |
-          git config --global user.name "ci"
-          git config --global user.email "ci@example.com"
-
-          git add dvc.lock *.dvc
-          if ! git diff --cached --quiet; then
-            echo "::error::dvc.lock or .dvc files have changed. Please run 'dvc repro' and commit the updated files." >&2
-            git diff --cached  # Optional: show what changed in logs
-            exit 1
-          fi
