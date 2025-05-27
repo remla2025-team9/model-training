@@ -9,8 +9,8 @@ stages:
       size: 55587
     - path: src/dataset.py
       hash: md5
-      md5: a402e97b800438f2f1f9b9f06a3429ab
-      size: 5139
+      md5: 2287737db3b64d6daa71a554a4e05e47
+      size: 5291
     params:
       params.yaml:
         prepare.test_size: 0.2
@@ -37,7 +37,7 @@ stages:
       size: 73868
     - path: vectorizers/preprocessor.joblib
       hash: md5
-      md5: edcffd9f3486b13eb135da1df688a774
+      md5: 70a191d4bb48b1991e6072a1768ed5ab
       size: 31326
   train:
     cmd: python -m src.modeling.train --model_type logistic
@@ -52,12 +52,12 @@ stages:
       size: 1446
     - path: src/modeling/train.py
       hash: md5
-      md5: a3857835c5886f8e2eeb955e049b82e1
-      size: 2326
+      md5: 816b7a8f093728800442eeec53e8fa3b
+      size: 2402
     outs:
     - path: models/model.joblib
       hash: md5
-      md5: ec2688b427475488b56f4cc95721186e
+      md5: a3713228f2d5aa849c58098f06c0f5d8
       size: 12591
   evaluate:
     cmd: python -m src.modeling.predict --model_path models/model.joblib
@@ -72,12 +72,12 @@ stages:
       size: 366
     - path: models/model.joblib
       hash: md5
-      md5: ec2688b427475488b56f4cc95721186e
+      md5: a3713228f2d5aa849c58098f06c0f5d8
       size: 12591
     - path: src/modeling/predict.py
       hash: md5
-      md5: b7be2f8c1d04ba5c80f9750ec6a97304
-      size: 3377
+      md5: 7f635c4bf7859d5767f59d87aa08b44f
+      size: 3479
     outs:
     - path: reports/evaluation_metrics.json
       hash: md5
