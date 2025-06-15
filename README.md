@@ -231,3 +231,35 @@ Coverage HTML written to dir htmlcov
 
 ## Linting Scores
 ![Pylint Score](pylint_score.svg)
+
+## Code Quality Checks
+
+We use three tools to ensure code quality: Pylint, Flake8, and Bandit.
+
+### Pylint
+
+To run pylint (checking  naming, code smells, and structure, includes a custom plugin to detect hardcoded seeds)
+
+```bash
+pip install pylint
+pylint src/ --rcfile=.pylintrc
+```
+
+
+### Flake8
+
+To run flake8 (PEP8 formatting)
+```bash
+pip install flake8
+flake8 src/
+```
+
+
+### Bandit
+
+To run bandit
+
+```bash
+pip install bandit
+bandit -r src/ -c bandit.yaml
+```
