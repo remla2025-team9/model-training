@@ -1,0 +1,18 @@
+skips:
+  - B404
+  - B603
+
+exclude:
+  - tests/
+
+targets:
+  - src/
+
+output:
+  format: txt
+  file: bandit-report.txt
+
+severity:
+  high: ["B102", "B303", "B501"]
+  medium: ["B301", "B403"]
+  low:  ["B101"]

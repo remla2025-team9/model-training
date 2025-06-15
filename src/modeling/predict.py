@@ -78,9 +78,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    """
-    Entry point for the sentiment classifier evaluation script.
-    """
+    # Entry point for the sentiment classifier evaluation script.
     parser = argparse.ArgumentParser(
         description="Evaluate a trained sentiment analysis classifier."
     )
