@@ -196,23 +196,25 @@ You can run the test suite with coverage measurement using the following command
 pytest --cov=src tests/
 ```
 ## Coverage Report
-<!-- coverage-start -->
 
-Name                       Stmts   Miss  Cover
-----------------------------------------------
-src/__init__.py                1      0   100%
-src/config.py                 13      0   100%
-src/dataset.py                60      4    93%
-src/features.py                0      0   100%
-src/modeling/__init__.py       0      0   100%
-src/modeling/predict.py       48      7    85%
-src/modeling/train.py         40      6    85%
-src/plots.py                   0      0   100%
-----------------------------------------------
-TOTAL                        162     17    90%
-Coverage HTML written to dir htmlcov
-============================= 16 passed in 23.14s ==============================
-<!-- coverage-end -->
+Generated using `pytest` and `pytest-cov`:
+
+| Module Path                  | Stmts | Miss | Cover |
+|-----------------------------|-------|------|-------|
+| `src/__init__.py`           | 1     | 0    | 100%  |
+| `src/config.py`             | 13    | 0    | 100%  |
+| `src/dataset.py`            | 60    | 4    | 93%   |
+| `src/features.py`           | 0     | 0    | 100%  |
+| `src/modeling/__init__.py`  | 0     | 0    | 100%  |
+| `src/modeling/predict.py`   | 47    | 2    | 96%   |
+| `src/modeling/train.py`     | 40    | 1    | 98%   |
+| `src/plots.py`              | 0     | 0    | 100%  |
+| **Total**                   | **161** | **7**  | **96%**  |
+
+### Test Summary
+
+- **All 28 test cases passed**
+- **Overall coverage: 96%**
 
 ## 🧪 Test Adequacy Metrics
 <!-- adequacy-start -->
