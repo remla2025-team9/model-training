@@ -10,27 +10,32 @@ REAL_RAW_DATA_PATH = config.RAW_DATA_DIR / "training_data.tsv"
 def real_raw_data_path():
     return str(REAL_RAW_DATA_PATH)
 
-def test_load_and_generate_features_basic(real_raw_data_path):
+@pytest.fixture(scope="module")
+def processed_data(real_raw_data_path):
     X, y = dataset.load_and_generate_features(real_raw_data_path, text_col='Review', label_col='Liked')
+    return X, y
+
+def test_load_and_generate_features_basic(processed_data):
+    X, y = processed_data
     assert issparse(X), "Features should be a sparse matrix"
     assert len(y) == X.shape[0], "Number of labels should match number of samples"
     assert set(np.unique(y)).issubset({0,1}), "Labels should be binary (0 or 1)"
     assert X.shape[0] > 0 and X.shape[1] > 0, "Features should not be empty"
 
-def test_no_nan_or_inf_in_features(real_raw_data_path):
-    X, _ = dataset.load_and_generate_features(real_raw_data_path, text_col='Review', label_col='Liked')
+def test_no_nan_or_inf_in_features(processed_data):
+    X, _ = processed_data
     dense = X.toarray()
     assert not np.isnan(dense).any(), "Features contain NaN"
     assert not np.isinf(dense).any(), "Features contain Inf"
     assert (dense >= 0).all(), "Features contain negative values"
 
-def test_label_distribution(real_raw_data_path):
-    _, y = dataset.load_and_generate_features(real_raw_data_path, text_col='Review', label_col='Liked')
+def test_label_distribution(processed_data):
+    _, y = processed_data
     unique_labels = np.unique(y)
     assert len(unique_labels) > 1, "Labels should contain at least two classes"
 
-def test_feature_correlation_with_label(real_raw_data_path):
-    X, y = dataset.load_and_generate_features(real_raw_data_path, text_col='Review', label_col='Liked')
+def test_feature_correlation_with_label(processed_data):
+    X, y = processed_data
     dense = X.toarray()
     pos_mean = dense[y == 1].mean(axis=0)
     neg_mean = dense[y == 0].mean(axis=0)
@@ -42,3 +47,4 @@ def test_preprocess_performance(real_raw_data_path):
     dataset.load_and_generate_features(real_raw_data_path, text_col='Review', label_col='Liked')
     duration = time.time() - start
     assert duration < 5, "Feature generation took too long"
+
