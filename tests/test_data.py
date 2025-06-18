@@ -48,3 +48,17 @@ def test_preprocess_performance(real_raw_data_path):
     duration = time.time() - start
     assert duration < 5, "Feature generation took too long"
 
+def test_duplicate_review_liked_pairs(real_raw_data_path):
+    import pandas as pd
+    df = pd.read_csv(real_raw_data_path, sep='\t')
+    df.columns = df.columns.str.strip()
+    dup_count = df.duplicated(subset=['Review', 'Liked']).sum()
+    assert dup_count <= 10, f"Too many duplicated review-label pairs: {dup_count}"
+
+def test_liked_column_values(real_raw_data_path):
+    import pandas as pd
+    df = pd.read_csv(real_raw_data_path, sep='\t')
+    df.columns = df.columns.str.strip()
+    assert df['Liked'].isin([0, 1]).all(), "Found non-binary or invalid values in 'Liked' column"
+
+
