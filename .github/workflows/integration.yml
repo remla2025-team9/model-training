@@ -39,15 +39,21 @@ jobs:
 
       - name: DVC pull
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           echo "Pulling DVC data..."
           dvc pull
           echo "DVC pull completed."
       
+      - name: Rebuild preprocessor (featurize)
+        run: |
+          echo "Rebuilding preprocessor..."
+          dvc repro featurize
+          echo "Featurize completed."
+
       - name: Run DVC pipeline
         run: |
           echo "Running DVC pipeline..."
-          dvc repro
+          dvc repro prepare train evaluate
           echo "DVC pipeline completed."
