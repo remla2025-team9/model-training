@@ -16,7 +16,7 @@ stages:
       - data/processed/test_labels.csv
 
   featurize:
-    cmd: python src/preprocess_wrapper.py --seed 42 --input data/raw/training_data.tsv --output vectorizers/preprocessor.joblib
+    cmd: python src/features.py --seed 42 --input data/raw/training_data.tsv --output vectorizers/preprocessor.joblib
     deps:
       - src/features.py
       - data/raw/training_data.tsv
