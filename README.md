@@ -203,7 +203,7 @@ Name                       Stmts   Miss  Cover
 src\__init__.py                1      0   100%
 src\config.py                 13      0   100%
 src\dataset.py                60      4    93%
-src\features.py                0      0   100%
+src\features.py               22      22    0%
 src\modeling\__init__.py       0      0   100%
 src\modeling\predict.py       47      2    96%
 src\modeling\train.py         40      1    98%
@@ -221,7 +221,7 @@ Generated using `pytest` and `pytest-cov`:
 | `src/__init__.py`           | 1     | 0    | 100%  |
 | `src/config.py`             | 13    | 0    | 100%  |
 | `src/dataset.py`            | 60    | 4    | 93%   |
-| `src/features.py`           | 0     | 0    | 100%  |
+| `src/features.py`           | 22    | 22   | 0%    |
 | `src/modeling/__init__.py`  | 0     | 0    | 100%  |
 | `src/modeling/predict.py`   | 47    | 2    | 96%   |
 | `src/modeling/train.py`     | 40    | 1    | 98%   |
