@@ -1,7 +1,7 @@
 name: Integration CI
 
 on:
-  workflow_dispatch         # ← enables manual “Run workflow” button
+  workflow_dispatch:
   pull_request:
     branches: [ main ]
     paths-ignore:
