@@ -7,30 +7,39 @@ stages:
     params:
       - prepare.test_size
     deps:
-    - data/raw/training_data.tsv
-    - src/dataset.py
+      - data/raw/training_data.tsv
+      - src/dataset.py
     outs:
-    - data/processed/train_features.npz
-    - data/processed/train_labels.csv
-    - data/processed/test_features.npz
-    - data/processed/test_labels.csv
-    - vectorizers/preprocessor.joblib
-    - vectorizers/preprocessed_data.joblib
+      - data/processed/train_features.npz
+      - data/processed/train_labels.csv
+      - data/processed/test_features.npz
+      - data/processed/test_labels.csv
+
+  featurize:
+    cmd: python src/features.py --seed 42 --input data/raw/training_data.tsv --output vectorizers/preprocessor.joblib
+    deps:
+      - src/features.py
+      - data/raw/training_data.tsv
+    outs:
+      - vectorizers/preprocessor.joblib:
+          cache: false
+
+
   train:
     cmd: python -m src.modeling.train --model_type logistic
     deps:
-    - data/processed/train_features.npz
-    - data/processed/train_labels.csv
-    - src/modeling/train.py
+      - data/processed/train_features.npz
+      - data/processed/train_labels.csv
+      - src/modeling/train.py
     outs:
-    - models/model.joblib
+      - models/model.joblib
+
   evaluate:
     cmd: python -m src.modeling.predict --model_path models/model.joblib
     deps:
-    - models/model.joblib
-    - data/processed/test_features.npz
-    - data/processed/test_labels.csv
-    - src/modeling/predict.py
+      - models/model.joblib
+      - data/processed/test_features.npz
+      - data/processed/test_labels.csv
+      - src/modeling/predict.py
     outs:
-    - reports/evaluation_metrics.json
-
+      - reports/evaluation_metrics.json

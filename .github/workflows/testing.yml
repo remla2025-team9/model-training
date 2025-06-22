@@ -90,6 +90,7 @@ jobs:
               cat README.md
           
           - name: Commit and push updated README
+            if: github.ref == 'refs/heads/main' && github.event_name == 'push'
             run: |
               git config --global user.name "github-actions"
               git config --global user.email "github-actions@github.com"

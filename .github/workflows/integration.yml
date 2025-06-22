@@ -1,6 +1,7 @@
 name: Integration CI
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [ main ]
     paths-ignore:
@@ -45,8 +46,14 @@ jobs:
           dvc pull
           echo "DVC pull completed."
       
+      - name: Rebuild preprocessor (featurize)
+        run: |
+          echo "Rebuilding preprocessor..."
+          dvc repro featurize
+          echo "Featurize completed."
+
       - name: Run DVC pipeline
         run: |
           echo "Running DVC pipeline..."
-          dvc repro
+          dvc repro prepare train evaluate
           echo "DVC pipeline completed."
