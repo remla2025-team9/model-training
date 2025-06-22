@@ -17,11 +17,9 @@ stages:
 
   featurize:
     cmd: python scripts/preprocess.py \
-           --seed ${params.featurize.seed} \
+           --seed 42 \
            --input data/raw/training_data.tsv \
            --output vectorizers/preprocessor.joblib
-    params:
-      - featurize.seed
     deps:
       - scripts/preprocess.py
       - data/raw/training_data.tsv
