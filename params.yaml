@@ -1,2 +1,5 @@
 prepare:
   test_size: 0.2
+
+featurize:
+  seed: 42
