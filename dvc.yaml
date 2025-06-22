@@ -18,7 +18,7 @@ stages:
   featurize:
     cmd: python src/preprocess_wrapper.py --seed 42 --input data/raw/training_data.tsv --output vectorizers/preprocessor.joblib
     deps:
-      - src/preprocess_wrapper.py
+      - src/features.py
       - data/raw/training_data.tsv
     outs:
       - vectorizers/preprocessor.joblib:
