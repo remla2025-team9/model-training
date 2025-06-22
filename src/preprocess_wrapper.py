@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import argparse
 import os
 import pandas as pd
@@ -23,13 +24,19 @@ def main():
     )
     args = p.parse_args()
 
-    # Make Python’s hash function deterministic
+    # Ensure deterministic hashing
     os.environ["PYTHONHASHSEED"] = str(args.seed)
 
     # Load raw data
     df = pd.read_csv(args.input, delimiter="\t", quoting=3)
-    # Run your library’s preprocess (which saves to the given path)
-    preprocess(df["Review"].tolist(), save_path=args.output)
+
+    # Library preprocess API: preprocess(data, save=True, model_path, data_path)
+    preprocess(
+        df["Review"].tolist(),
+        save=True,
+        model_path=args.output,
+        data_path="vectorizers/preprocessed_data.joblib"
+    )
 
 
 if __name__ == "__main__":
