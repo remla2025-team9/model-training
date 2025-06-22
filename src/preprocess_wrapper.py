@@ -17,6 +17,8 @@ def main():
     model_path = args.output
     data_path = "vectorizers/preprocessed_data.joblib"
 
+    os.makedirs(os.path.join("output", os.path.dirname(model_path)), exist_ok=True)
+
     preprocess(
         df["Review"].tolist(),
         save=True,
