@@ -16,12 +16,12 @@ stages:
       - data/processed/test_labels.csv
 
   featurize:
-    cmd: python scripts/preprocess.py \
+    cmd: python src/preprocess_wrapper.py \
            --seed 42 \
            --input data/raw/training_data.tsv \
            --output vectorizers/preprocessor.joblib
     deps:
-      - scripts/preprocess.py
+      - src/preprocess_wrapper.py
       - data/raw/training_data.tsv
     outs:
       - vectorizers/preprocessor.joblib:
