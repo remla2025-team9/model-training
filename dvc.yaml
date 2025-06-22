@@ -20,6 +20,8 @@ stages:
            --seed ${params.featurize.seed} \
            --input data/raw/training_data.tsv \
            --output vectorizers/preprocessor.joblib
+    params:
+      - featurize.seed
     deps:
       - scripts/preprocess.py
       - data/raw/training_data.tsv
