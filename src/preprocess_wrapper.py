@@ -4,6 +4,7 @@ import os
 import pandas as pd
 from sentiment_analysis_preprocessing.preprocess import preprocess
 
+
 def main():
     p = argparse.ArgumentParser(
         description="Generate the preprocessor.joblib artifact"
@@ -29,6 +30,7 @@ def main():
     df = pd.read_csv(args.input, delimiter="\t", quoting=3)
     # Run your library’s preprocess (which saves to the given path)
     preprocess(df["Review"].tolist(), save_path=args.output)
+
 
 if __name__ == "__main__":
     main()
