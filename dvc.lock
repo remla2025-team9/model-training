@@ -31,14 +31,6 @@ stages:
       hash: md5
       md5: c9da4f76457a0c28a2eeef9ff2ba55d4
       size: 1446
-    - path: vectorizers/preprocessed_data.joblib
-      hash: md5
-      md5: 6ac4cb95c0cf8f3dc7c7840346d8f336
-      size: 73868
-    - path: vectorizers/preprocessor.joblib
-      hash: md5
-      md5: edcffd9f3486b13eb135da1df688a774
-      size: 31326
   train:
     cmd: python -m src.modeling.train --model_type logistic
     deps:
@@ -76,10 +68,27 @@ stages:
       size: 12591
     - path: src/modeling/predict.py
       hash: md5
-      md5: b7be2f8c1d04ba5c80f9750ec6a97304
-      size: 3377
+      md5: 7f67b7c7f1baa0a4611dad3f21e186ad
+      size: 3363
     outs:
     - path: reports/evaluation_metrics.json
       hash: md5
       md5: 1eb93d172a44f7310cb3f2e6b23b7ff9
       size: 1125
+  featurize:
+    cmd: python src/features.py --seed 42 --input data/raw/training_data.tsv 
+      --output vectorizers/preprocessor.joblib
+    deps:
+    - path: data/raw/training_data.tsv
+      hash: md5
+      md5: 8104bfc2f44d60939e1fd3208a187500
+      size: 55587
+    - path: src/features.py
+      hash: md5
+      md5: c9611b4469b29708ef85ef5aac5dd986
+      size: 934
+    outs:
+    - path: vectorizers/preprocessor.joblib
+      hash: md5
+      md5: 303e82acb70d21aaa0002c0bc4db49c5
+      size: 31326
