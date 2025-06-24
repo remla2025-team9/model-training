@@ -1,5 +1,7 @@
+# This GitHub Actions workflow is designed to run integration tests regarding DVC pipelines and code quality checks.
 name: Integration CI
 
+# This workflow is triggered on pull requests to the main branch, excluding certain paths.
 on:
   pull_request:
     branches: [ main ]
