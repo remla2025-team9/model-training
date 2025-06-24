@@ -55,13 +55,21 @@ jobs:
           dvc pull
           echo "DVC pull completed."
       
+      # Rebuild preprocessor (featurize) to ensure data is ready for training
       - name: Rebuild preprocessor (featurize)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           echo "Rebuilding preprocessor..."
           dvc repro featurize
           echo "Featurize completed."
 
+      # Run DVC pipeline to prepare, train, and evaluate the model    
       - name: Run DVC pipeline
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           echo "Running DVC pipeline..."
           dvc repro prepare train evaluate
