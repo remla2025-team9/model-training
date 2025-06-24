@@ -1,5 +1,7 @@
+# This workflow automates testing and code quality checks for a Python project.
 name: Automated Testing Workflow
 
+# This workflow is triggered on pushes and pull requests to the main branch,
 on:
   push:
     branches:
@@ -16,23 +18,32 @@ on:
 permissions:
   contents: write
 
+# Environment variables for container registry and Git configuration
+env:
+  GIT_USER_NAME: "github-actions[bot]"
+  GIT_USER_EMAIL: "github-actions[bot]@users.noreply.github.com"
+
 jobs:
     python-tests:
         runs-on: ubuntu-latest
         steps:
+          # Check out the repository code for the workflow
           - name: Checkout code
             uses: actions/checkout@v4
 
+          # Set up Python environment with specified version
           - name: Set up Python
             uses: actions/setup-python@v5
             with:
               python-version: '3.10'
 
+          # Install project dependencies from requirements.txt
           - name: Install dependencies
             run: |
               python -m pip install --upgrade pip
               pip install -r requirements.txt
           
+          # Run pylint code analysis and generate score badge
           - name: Run pylint and capture score and generate badge
             run: |
               pylint src/ > pylint_output.txt || true
@@ -52,9 +63,9 @@ jobs:
           #     BANDIT_SCORE=$(jq '.results | length' bandit_output.json)
           #     echo "Bandit score is $BANDIT_SCORE"
           #     anybadge -v "$BANDIT_SCORE" \
-          #       -l bandit \
-          #       -f bandit_score.svg 0=green 1=yellow 2=orange 3=red
+          #       -l bandit \          #       -f bandit_score.svg 0=green 1=yellow 2=orange 3=red
 
+          # Pull data files managed by DVC from remote storage
           - name: DVC pull
             env:
               AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -64,6 +75,7 @@ jobs:
               dvc pull
               echo "DVC pull completed."
           
+          # Execute DVC pipeline and push results to remote storage
           - name: Run DVC pipeline
             env:
               AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -76,23 +88,38 @@ jobs:
 
               echo "MODEL_FILE_PATH=models/model.joblib" >> $GITHUB_ENV
 
+          # Run pytest with coverage reporting
           - name: Run tests
             run: |
               pytest tests/ --cov=src --cov-report=term > pytest-coverage.txt
           
+          # Generate and format coverage report as Markdown table for README
           - name: Format and insert coverage as Markdown table
             run: |
               python .github/scripts/update_readme_coverage.py
             
+          # Insert test adequacy metrics into README file
           - name: Insert test adequacy metrics into README
             run: |
               python .github/scripts/update_readme_metrics.py
               cat README.md
-          
+
+          # Sets up Git identity for automated commits
+          - name: Configure Git
+            run: |
+              git config user.name "${{ env.GIT_USER_NAME }}"
+              git config user.email "${{ env.GIT_USER_EMAIL }}"
+              git remote set-url origin git@github.com:${{ github.repository }}.git
+
+          # Sets up SSH for pushing changes to the repository to bypass branch protection rules
+          - name: Setup SSH for pushing
+            uses: webfactory/ssh-agent@v0.9.0
+            with:
+              ssh-private-key: ${{ secrets.DEPLOY_KEY_PRIVATE }}
+
+          # Commit and push updated README with test metrics and badges
           - name: Commit and push updated README
             run: |
-              git config --global user.name "github-actions"
-              git config --global user.email "github-actions@github.com"
               git add pylint_score.svg README.md
-              git commit -m "Update test adequacy metrics, coverage and badges in README [CI skip]" || echo "No changes to commit"
+              git commit -m "Update test adequacy metrics, coverage and badges in README [skip ci]" || echo "No changes to commit"
               git push origin ${{ github.ref_name }}
