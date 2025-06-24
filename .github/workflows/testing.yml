@@ -119,6 +119,7 @@ jobs:
 
           # Commit and push updated README with test metrics and badges
           - name: Commit and push updated README
+            if: github.ref == 'refs/heads/main' && github.event_name == 'push'
             run: |
               git add pylint_score.svg README.md
               git commit -m "Update test adequacy metrics, coverage and badges in README [skip ci]" || echo "No changes to commit"
