@@ -46,24 +46,24 @@ jobs:
           # Run pylint code analysis and generate score badge
           - name: Run pylint and capture score and generate badge
             run: |
-              pylint src/ > pylint_output.txt || true
+              pylint --rcfile=linting/.pylintrc src/ > pylint_output.txt || true
               cat pylint_output.txt
 
               SCORE=$(grep -oP 'rated at \K[0-9]+\.[0-9]+' pylint_output.txt | tail -1)
               echo "Pylint score is $SCORE"
               anybadge -v "$SCORE" \
                 -l pylint \
-                -f pylint_score.svg --overwrite "7=orange" "8=yellow" "9=green"
+                -f linting/pylint_score.svg --overwrite "7=orange" "8=yellow" "9=green"
+              
+              if [ "$(echo "$SCORE < 10.0" | bc -l)" -eq 1 ]; then
+                echo "❌ Pylint score is less than 10.0. Failing pipeline."
+                exit 1
+              fi
           
-          # - name: Run bandit and capture score and generate badge
-          #   run: |
-          #     bandit -r src/ -f json -o bandit_output.json || true
-          #     cat bandit_output.json
-
-          #     BANDIT_SCORE=$(jq '.results | length' bandit_output.json)
-          #     echo "Bandit score is $BANDIT_SCORE"
-          #     anybadge -v "$BANDIT_SCORE" \
-          #       -l bandit \          #       -f bandit_score.svg 0=green 1=yellow 2=orange 3=red
+          - name: Run bandit and capture score and generate badge
+            run: |
+              bandit -r src/ -c linting/bandit.yaml -f json -o bandit_output.json || true
+              cat bandit_output.json
 
           # Pull data files managed by DVC from remote storage
           - name: DVC pull
@@ -102,6 +102,12 @@ jobs:
           - name: Insert test adequacy metrics into README
             run: |
               python .github/scripts/update_readme_metrics.py
+              cat README.md
+          
+          # Insert bandit results into README file
+          - name: Insert bandit results into README
+            run: |
+              python .github/scripts/update_readme_bandit.py
               cat README.md
 
           # Sets up Git identity for automated commits

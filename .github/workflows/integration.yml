@@ -35,15 +35,15 @@ jobs:
 
       # Run pylint for code quality analysis
       - name: Run pylint
-        run: pylint src/
+        run: pylint --rcfile=linting/.pylintrc src/  
 
       # Run flake8 for style guide enforcement
       - name: Run flake8
-        run: flake8 src/
+        run: flake8 --config=linting/.flake8 src/ 
 
       # Run bandit for security vulnerability scanning
       - name: Run bandit
-        run: bandit -r src/
+        run: bandit -r src/ -c linting/bandit.yaml
 
       # Pull data files managed by DVC from remote storage
       - name: DVC pull
