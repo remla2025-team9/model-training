@@ -79,23 +79,6 @@ stages:
       hash: md5
       md5: 0ba1ffd28ffbfd89e3e85c7e123eb9e8
       size: 1138
-  featurize:
-    cmd: python src/features.py --seed 42 --input data/raw/training_data.tsv 
-      --output vectorizers/preprocessor.joblib
-    deps:
-    - path: data/raw/training_data.tsv
-      hash: md5
-      md5: 8104bfc2f44d60939e1fd3208a187500
-      size: 55587
-    - path: src/features.py
-      hash: md5
-      md5: c9611b4469b29708ef85ef5aac5dd986
-      size: 934
-    outs:
-    - path: vectorizers/preprocessor.joblib
-      hash: md5
-      md5: 2f6dad4c5bac772963b271b50878c77e
-      size: 31326
   load_data:
     cmd: python -m src.dataset
     deps:
