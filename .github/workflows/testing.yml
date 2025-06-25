@@ -82,8 +82,6 @@ jobs:
               echo "DVC pipeline completed."
               dvc push
 
-              echo "MODEL_FILE_PATH=models/model.joblib" >> $GITHUB_ENV
-
           # Run pytest with coverage reporting
           - name: Run tests
             run: |

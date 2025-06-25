@@ -13,25 +13,34 @@ This repository contains scripts to train, evaluate, and export a sentiment anal
 The project follows a structure adapted from the Cookiecutter Data Science template:
 
 ```
-├── .github/             # GitHub Actions workflows (CI/CD - Planned)
+├── .github/             # GitHub Actions workflows for CI/CD
 │   └── workflows/
+│       ├── integration.yml   # Code quality and pipeline validation
+│       ├── testing.yml       # Test execution and coverage reporting
+│       ├── delivery.yml      # Automated pre-release creation
+│       └── deployment.yml    # Stable release deployment
 ├── data/
-│   ├── raw/             # Original, immutable data (e.g., training_data.tsv)
+│   ├── raw/             # Original, immutable data
 │   └── processed/       # Processed data ready for modeling (features & labels)
-├── docs/                # Project documentation (e.g., MkDocs)
-├── models/              # Trained model artifacts (e.g., sentiment_classifier-nb-v1.0.0.joblib)
+├── docs/                # Project documentation
+├── linting/             # Code quality configuration
+├── models/              # Trained model artifacts
 ├── notebooks/           # Jupyter notebooks for exploration
-├── reports/             # Evaluation metrics, figures
-│   └── evaluation_metrics.json
-├── src/       # Python source code for the pipeline
+├── reports/             # Evaluation metrics and figures
+├── src/                 # Python source code for the pipeline
 │   ├── __init__.py
 │   ├── config.py        # Configuration variables (paths, defaults)
-│   ├── dataset.py       # Data loading, preprocessing (feature generation), splitting
+│   ├── dataset.py       # Data loading routines
+│   ├── features.py      # Feature generation and preprocessing
 │   └── modeling/
 │       ├── __init__.py
 │       ├── train.py     # Model training script
 │       └── predict.py   # Model evaluation script
-├── .gitignore           # Files for Git to ignore
+├── tests/               # Test files
+├── vectorizers/         # Saved vectorizers and preprocessing components
+├── dvc.yaml             # DVC pipeline configuration
+├── dvc.lock             # DVC pipeline lock file
+├── params.yaml          # Pipeline parameters
 ├── pyproject.toml       # Project metadata and tool configuration
 ├── requirements.txt     # Python dependencies
 └── README.md            # This file
@@ -39,95 +48,117 @@ The project follows a structure adapted from the Cookiecutter Data Science templ
 
 ---
 
-## Prerequisites
+## Setup
 
+### Prerequisites
 *   Python 3.8 or newer
 *   Git
+*   AWS CLI (for DVC remote storage)
 
-**Installation:**
+### Installation
 
-1.  **Install Python dependencies:**
-    It's highly recommended to use a virtual environment:
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
-    pip install -r requirements.txt
-    ```
-    The `requirements.txt` should include your custom preprocessing library:
-    ```bash
-    # In requirements.txt
-    # ... other packages ...
-    git+https://github.com/remla2025-team9/lib-ml.git # Or your specific preprocessing lib
-    ```
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd model-training
+   ```
+
+2. **Set up Python virtual environment:**
+   ```bash
+   python -m venv .venv
+
+   # On MacOS and Linux:
+   source .venv/bin/activate  
+   
+   # On Windows: 
+   .venv\Scripts\activate
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure AWS credentials (for DVC):**
+   ```bash
+   pip install awscli
+   aws configure  # Set your AWS Access Key, Secret Key, and default region
+   ```
+
+5. **Initialize DVC:**
+   ```bash
+   dvc pull  # Download data and model files from remote storage
+   ```
 
 ---
 
-## Option 1: Usage - Running the Pipeline with DVC
-The pipeline is designed to be run using DVC (Data Version Control) for managing data and model artifacts. This allows for reproducibility and versioning of datasets and models.
+## Usage
 
-### Prerequisites for DVC
-*   Install AWS CLI and configure your credentials for the S3 remote storage.
-    ```bash
-    pip install awscli
-    aws configure # Set your AWS Access Key, Secret Key, and default region
-    ```
-*   Install DVC by setting up the python virtual environment as described above
+### Option 1: Run Complete Pipeline with DVC (Recommended)
 
-*   Initialize DVC in the project directory:
-    ```bash
-    dvc pull
-    ```
+The DVC pipeline manages data versioning and ensures reproducible model training:
 
-*   Run the pipeline using DVC:
-    ```bash
-    dvc repro
-    ```
-### DVC Pipeline Steps
+```bash
+# Run the entire pipeline
+dvc repro
 
-**Fetching the Data and Model Files:**
+# Or run specific stages
+dvc repro load_data    # Download raw data
+dvc repro prepare     # Generate features
+dvc repro train       # Train model
+dvc repro evaluate    # Evaluate model
+```
 
-Running `dvc pull` will download the necessary data and model files from the S3 remote storage configured in `.dvc/config`. 
+#### Pipeline Stages
 
-**Running the DVC Pipeline:**
-The DVC pipeline consists of multiple stages defined in `dvc.yaml`. Executing `dvc repro` will run the pipeline stages in the following order:
-1. **`perpare`**: processes raw data into structured and labeled datasets, ready for feature extraction and modeling
-   1. Loads raw text data from a CSV/TSV file
-   2. Preprocesses the text column which generates feature vectors and saves vectorizer models and preprocessed data
-   3. Splits the dataset into training and test sets
-   4. Saves the resulting feature matrices and label arrays for both train and test splits to disk for use in subsequent stages
-2. **`featurize`**: preprocesses raw training data to generate and save a text vectorizer model, enabling reproducible feature extraction as part of the DVC pipeline
-    1. Relies on the raw training data prepared in the previous `prepare` stage
-    2. Reads the cleaned and organized text data to ensure consistent input for feature extraction
-    3. Applies text preprocessing and vectorization to convert raw text reviews into numerical features
-    4. Saves the resulting vectorizer model for use in downstream stages like training and inference
-3. **`train`**:Takes the processed training features and labels produced by earlier pipeline stages and fits a machine learning model 
-    1. Loads the preprocessed training features and labels generated by the `prepare` stage
-    2. Initializes the chosen classifier (Logistic Regression or Gaussian Naive Bayes)
-    3. Trains the classifier on the training data
-    4. Saves the trained model to disk for later use in predictions and evaluations
-4. **`evaluate`**: takes the trained model and the processed test data from previous pipeline stages, uses the model to make predictions, and computes evaluation metrics to assess model performance.
-    1. Loads the processed test features and labels generated by the `prepare` stage.
-    2. Loads the trained model produced by the `train` stage
-    3. Uses the model to predict labels for the test data
-    4. Calculates various evaluation metrics
-    5. Saves all computed metrics to a JSON file for reporting and tracking model performance
-## Option 2: Usage - Running the Pipeline Manually
+The pipeline consists of four sequential stages:
 
-**Step 1: Data Processing (Generate features & split data)**
+1. **`load_data`** - Downloads raw training data from Google Drive
+   - **Outputs:** `data/raw/training_data.tsv`
 
-This script loads the raw data, uses an external library for text preprocessing to generate features, splits the data into training and test sets, and saves the processed features and labels.
+2. **`prepare`** - Processes raw data into ML-ready features
+   - Preprocesses text using external Preprocessor
+   - Applies CountVectorizer for feature extraction
+   - Splits data into train/test sets
+   - **Outputs:** processed features, labels, and fitted vectorizer
+
+3. **`train`** - Trains machine learning model
+   - Supports Logistic Regression and Naive Bayes
+   - **Outputs:** `models/model.joblib`
+
+4. **`evaluate`** - Evaluates model performance
+   - Generates accuracy, precision, recall, F1 metrics
+   - **Outputs:** `reports/evaluation_metrics.json`
+
+### Option 2: Run Pipeline Manually
+
+For development or debugging, you can run individual steps:
+
+**Step 1: Load Data**
+
+Download raw training data from Google Drive:
 
 ```bash
 python -m src.dataset
 ```
-*   **Inputs:** Reads from `data/raw/training_data.tsv` (or as specified by `--raw_data_path` argument or `src/config.py`).
+*   **Outputs:** `data/raw/training_data.tsv`
+
+**Step 2: Data Processing (Generate features & split data)**
+
+Process raw data into features and labels ready for modeling:
+
+```bash
+python -m src.features
+```
+*   **Inputs:** `data/raw/training_data.tsv`
 *   **Outputs:**
     *   `data/processed/train_features.npz`
     *   `data/processed/train_labels.csv`
     *   `data/processed/test_features.npz`
     *   `data/processed/test_labels.csv`
+    *   `vectorizers/vectorizer.joblib`
 
-**Step 2: Model Training**
+**Step 3: Model Training**
 
 This script loads the processed training features and labels, trains a classifier, and saves the trained model.
 
@@ -139,7 +170,7 @@ python -m src.modeling.train --model_type logistic
     *   `--model_type`: Choose 'nb' (Gaussian Naive Bayes) or 'logistic' (Logistic Regression).
 *   **Outputs:** Saves the trained model to `models/model.joblib`
 
-**Step 3: Model Evaluation**
+**Step 4: Model Evaluation**
 
 This script loads the processed test features and labels, loads a trained model, makes predictions, and saves evaluation metrics.
 
@@ -161,92 +192,144 @@ Key parameters for the scripts (e.g., test split ratio, model type) can be passe
 *(A `params.yaml` file is included for planned DVC integration, where these parameters will be centrally managed.)*
 
 ---
-## Workflow Overview
-This project follows a structured workflow for training and evaluating a sentiment analysis model, implementing **continuous integration, delivery, and deployment** practices.
 
-Additionally, it includes automated testing and code quality checks through **continuous testing** to ensure robustness and maintainability.
+## CI/CD Workflows
 
-### Continuous Integration
+This project implements a complete CI/CD pipeline with four automated workflows for quality assurance and model deployment.
 
-`integration.yml` automatically runs integration tests and code quality checks on every pull request to the `main` branch. The workflow performs the following steps:
+### Integration (`integration.yml`)
+**Trigger:** Pull requests to `main` branch  
+**Purpose:** Validates code quality and pipeline integrity
 
-* Installs all project dependencies in a clean environment
-* Runs static code analysis using pylint and flake8 to enforce code quality and style
-* Scans the codebase for security vulnerabilities with bandit
-* Uses DVC to pull required data files from remote storage
-* Rebuilds the text preprocessor to ensure feature extraction is reproducible
-* Executes the full DVC pipeline (`prepare`, `train`, `evaluate`) to verify that all stages run successfully with the latest code and data
+- Runs code quality checks (pylint, flake8, bandit)
+- Executes full DVC pipeline to ensure reproducibility
+- Prevents breaking changes from being merged
 
-This automated process helps ensure that code changes are robust, secure, and do not break the end-to-end machine learning workflow.
-### Continuous Delivery
-`delivery.yml` automates the delivery of new model versions as pre-releases. The workflow is triggered automatically on every push to the main branch. The workflow performs the following steps:
+### Testing (`testing.yml`) 
+**Trigger:** Push and pull requests to `main` branch  
+**Purpose:** Comprehensive testing and metrics reporting
 
-* Installs all dependencies and pulls the latest data and artifacts using DVC
-* Runs the full DVC pipeline to retrain the model and generate updated evaluation metrics
-* Uploads the trained model and evaluation metrics as GitHub Actions artifacts for traceability
-* Automatically bumps the pre-release version tag using semantic versioning and creates a new GitHub pre-release with the model and metrics attached.
-* This workflow ensures that every update to the main branch results in a reproducible, versioned pre-release, making it easy to track and test new model iterations before a stable release
+- Runs unit and integration tests with coverage reporting
+- Generates pylint score badges and security analysis
+- Auto-updates README with test results and metrics
+- Commits updated badges and reports
 
-### Continuous Deployment
-`deployment.yml` automates the deployment of the sentiment analysis model. The workflow is triggered manually via the GitHub Actions UI and allows you to specify the release level (`patch`, `minor`, or `major`) for versioning. The workflow performs the following steps:
+### Delivery (`delivery.yml`)
+**Trigger:** Every push to `main` branch  
+**Purpose:** Automated pre-release creation
 
-* Installs all project dependencies and pulls the latest data and artifacts using DVC
-* Runs the full DVC pipeline to retrain the model and generate updated evaluation metrics
-* Uploads the trained model and evaluation metrics as GitHub Actions artifacts for record keeping
-* Bumps the stable version tag according to the selected release level and creates a new GitHub release with the model and metrics attached.
-* Handles Git operations and SSH setup to automate tagging and commits, ensuring a smooth release process
-* Automatically starts the next development cycle by incrementing to the next pre-release version
+- Trains model with latest code and data
+- Creates pre-release tags with semantic versioning
+- Uploads model, vectorizer, and metrics as release assets
+- Enables testing of new model versions
 
-### Continuous Testing
-`testing.yml` ensures code quality and reliability by running automated tests and static analysis on every push and pull request to the main branch. The workflow performs the following steps:
+### Deployment (`deployment.yml`)
+**Trigger:** Manual workflow dispatch  
+**Purpose:** Stable release deployment
 
-* Installs all dependencies and sets up the Python environment
-* Runs pylint for code quality checks and generates a badge based on the score
-* Performs security analysis with bandit and outputs results
-* Pulls the latest data and artifacts using DVC
-* Executes the full DVC pipeline to verify that all stages run successfully
-* Runs all unit and integration tests with pytest, collecting code coverage information
-* Automatically updates the README with the latest test coverage, adequacy metrics, and security scan results
-* Commits and pushes updated badges and metrics to the repository for visibility
-* This workflow helps maintain high code standards and provides immediate feedback on the impact of code changes
-## Model integration
-The trained model can now be integrated and used for predictions
+- Allows selection of release level (patch/minor/major)
+- Creates stable releases with trained models and vectorizers
+- Automatically prepares next development cycle
+- Handles version tagging and Git operations
 
-### 1. From a GitHub Release
-Each stable version tag `vX.Y.Z` has its model attached as a release asset:
-```
-https://github.com/remla2025-team9/model-training/releases/download/vX.Y.Z/model.joblib
-```
-In your code or service, set the URL and fetch at startup:
+
+## Model Integration
+
+The trained sentiment analysis model and its vectorizer can be integrated into applications for making predictions. Both components are packaged together in each release.
+
+### Download from GitHub Release
+
+Each stable version tag `{{ MODEL_RELEASE_VERSION }}` includes both the trained model and vectorizer as release assets:
+
 ```python
 import os
 import pathlib
 import requests
 import joblib
 
-MODEL_URL = os.getenv(
-    "MODEL_URL",
-    "https://github.com/remla2025-team9/model-training/releases/download/v1.2.3/"
-    "sentiment_pipeline-v1.2.3.joblib"
-)
-```
-Download and cache the model:
-```python
-cache_dir = pathlib.Path("/cache/models")
-cache_dir.mkdir(parents=True, exist_ok=True)
-local_path = cache_dir / pathlib.Path(MODEL_URL).name
+# Set release version and download URLs
+MODEL_RELEASE_VERSION = os.getenv("MODEL_RELEASE_VERSION", "v1.0.0")
+BASE_URL = f"https://github.com/remla2025-team9/model-training/releases/download/{MODEL_RELEASE_VERSION}"
 
-if not local_path.exists():
-    resp = requests.get(MODEL_URL)
-    resp.raise_for_status()
-    local_path.write_bytes(resp.content)
+MODEL_URL = f"{BASE_URL}/model.joblib"
+VECTORIZER_URL = f"{BASE_URL}/vectorizer.joblib"
+
+def download_and_cache_file(url, cache_dir, filename):
+    """Download and cache a file locally."""
+    cache_dir = pathlib.Path(cache_dir)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    local_path = cache_dir / filename
+    
+    if not local_path.exists():
+        resp = requests.get(url)
+        resp.raise_for_status()
+        local_path.write_bytes(resp.content)
+        print(f"Downloaded {filename}")
+    else:
+        print(f"Using cached {filename}")
+    
+    return local_path
+
+# Download both model and vectorizer
+cache_dir = pathlib.Path("/cache/models")
+model_path = download_and_cache_file(MODEL_URL, cache_dir, "model.joblib")
+vectorizer_path = download_and_cache_file(VECTORIZER_URL, cache_dir, "vectorizer.joblib")
+
+# Load the components
+model = joblib.load(model_path)
+vectorizer = joblib.load(vectorizer_path)
 ```
-Load the model:
+
+### Making Predictions
+
+To use the model for sentiment analysis, you need the preprocessor, vectorizer, and trained model:
+
 ```python
-model = joblib.load(local_path)
+from sentiment_analysis_preprocessing.preprocesser import Preprocessor
+
+def predict_sentiment(text_review, model, vectorizer):
+    """
+    Predict sentiment for a restaurant review.
+    
+    Args:
+        text_review (str): The review text to analyze
+        model: The trained sentiment classifier
+        vectorizer: The fitted CountVectorizer from training
+    
+    Returns:
+        dict: Prediction results with label and confidence
+    """
+    # Step 1: Preprocess text using the same preprocessor from training
+    preprocessor = Preprocessor()
+    preprocessed_text = preprocessor.transform([text_review])
+    
+    # Step 2: Transform preprocessed text using the vectorizer
+    text_features = vectorizer.transform(preprocessed_text)
+    
+    # Step 3: Make prediction
+    prediction = model.predict(text_features)[0]
+    confidence = max(model.predict_proba(text_features)[0])
+    
+    return {
+        "sentiment": "positive" if prediction == 1 else "negative",
+        "confidence": round(confidence, 3)
+    }
+
+# Example usage
+review_text = "The food was absolutely delicious and the service was excellent!"
+result = predict_sentiment(review_text, model, vectorizer)
+print(f"Sentiment: {result['sentiment']} (confidence: {result['confidence']})")
 ```
-### 2. From a local file
-It is also possible to load the model from a local file, either by cloning the repo and following the steps above to train and generate the model, or by downloading the model file directly from the GitHub release page.
+
+### Integration Notes
+
+- **Complete pipeline**: Always use Preprocessor → CountVectorizer → Model in that exact order
+- **Version consistency**: Download model and vectorizer from the same release to ensure compatibility
+- **Preprocessing requirement**: The Preprocessor step is essential and must match the training pipeline
+- **Performance**: Consider caching the loaded components to avoid reloading for multiple predictions
+- **Error handling**: Add appropriate error handling for network requests and file operations in production use
+
+
 
 ## How to Run Tests with Coverage Reporting
 
@@ -255,6 +338,8 @@ You can run the test suite with coverage measurement using the following command
 ```bash
 pytest --cov=src tests/
 ```
+
+
 ## Code Quality Checks
 
 We use three tools to ensure code quality: Pylint, Flake8, and Bandit.
@@ -268,7 +353,6 @@ pip install pylint
 pylint --rcfile=linting/.pylintrc src/
 ```
 
-
 ### Flake8
 
 To run flake8 (PEP8 formatting)
@@ -276,7 +360,6 @@ To run flake8 (PEP8 formatting)
 pip install flake8
 flake8 --config=linting/.flake8 src/
 ```
-
 
 ### Bandit
 
@@ -288,37 +371,38 @@ bandit -r src/ -c linting/bandit.yaml
 ```
 
 
+
 ## Coverage Report
 
 <!-- coverage-start -->
 
-| File | Stmts | Miss | Cover |
-|------|-------|------|--------|
-| `src/__init__.py` | 1 | 0 | 100% |
-| `src/config.py` | 13 | 0 | 100% |
-| `src/dataset.py` | 60 | 4 | 93% |
-| `src/features.py` | 22 | 0 | 100% |
-| `src/modeling/__init__.py` | 0 | 0 | 100% |
-| `src/modeling/predict.py` | 47 | 2 | 96% |
-| `src/modeling/train.py` | 40 | 1 | 98% |
-| `src/plots.py` | 0 | 0 | 100% |
-| **Total** | 183 | 7 | 96% |
+| File                       | Stmts | Miss | Cover |
+| -------------------------- | ----- | ---- | ----- |
+| `src/__init__.py`          | 1     | 0    | 100%  |
+| `src/config.py`            | 13    | 0    | 100%  |
+| `src/dataset.py`           | 60    | 4    | 93%   |
+| `src/features.py`          | 22    | 0    | 100%  |
+| `src/modeling/__init__.py` | 0     | 0    | 100%  |
+| `src/modeling/predict.py`  | 47    | 2    | 96%   |
+| `src/modeling/train.py`    | 40    | 1    | 98%   |
+| `src/plots.py`             | 0     | 0    | 100%  |
+| **Total**                  | 183   | 7    | 96%   |
 
 <!-- coverage-end -->
 
 Generated using `pytest` and `pytest-cov`:
 
-| Module Path                  | Stmts | Miss | Cover |
-|-----------------------------|-------|------|-------|
-| `src/__init__.py`           | 1     | 0    | 100%  |
-| `src/config.py`             | 13    | 0    | 100%  |
-| `src/dataset.py`            | 60    | 4    | 93%   |
-| `src/features.py`           | 22    | 22   | 0%    |
-| `src/modeling/__init__.py`  | 0     | 0    | 100%  |
-| `src/modeling/predict.py`   | 47    | 2    | 96%   |
-| `src/modeling/train.py`     | 40    | 1    | 98%   |
-| `src/plots.py`              | 0     | 0    | 100%  |
-| **Total**                   | **161** | **7**  | **96%**  |
+| Module Path                | Stmts   | Miss  | Cover   |
+| -------------------------- | ------- | ----- | ------- |
+| `src/__init__.py`          | 1       | 0     | 100%    |
+| `src/config.py`            | 13      | 0     | 100%    |
+| `src/dataset.py`           | 60      | 4     | 93%     |
+| `src/features.py`          | 22      | 22    | 0%      |
+| `src/modeling/__init__.py` | 0       | 0     | 100%    |
+| `src/modeling/predict.py`  | 47      | 2     | 96%     |
+| `src/modeling/train.py`    | 40      | 1     | 98%     |
+| `src/plots.py`             | 0       | 0     | 100%    |
+| **Total**                  | **161** | **7** | **96%** |
 
 ### Test Summary
 
@@ -327,12 +411,12 @@ Generated using `pytest` and `pytest-cov`:
 
 ## 🧪 Test Adequacy Metrics
 <!-- adequacy-start -->
-| Metric               | Value   |
-|----------------------|---------|
-| Accuracy             | 0.7556  |
-| Precision (weighted) | 0.7563  |
-| Recall (weighted)    | 0.7556  |
-| F1 Score (weighted)  | 0.7536  |
+| Metric               | Value  |
+| -------------------- | ------ |
+| Accuracy             | 0.7556 |
+| Precision (weighted) | 0.7563 |
+| Recall (weighted)    | 0.7556 |
+| F1 Score (weighted)  | 0.7536 |
 
 <details>
 <summary>Confusion Matrix</summary>
@@ -343,16 +427,16 @@ Generated using `pytest` and `pytest-cov`:
 <!-- BANDIT_START -->
 ## Bandit Security Analysis
 
-| File | LOC | High | Medium | Low |
-|------|-----|------|--------|-----|
-| `src/__init__.py` | 2 | 0 | 0 | 0 |
-| `src/config.py` | 14 | 0 | 0 | 0 |
-| `src/dataset.py` | 115 | 0 | 0 | 0 |
-| `src/features.py` | 27 | 0 | 0 | 0 |
-| `src/modeling/__init__.py` | 0 | 0 | 0 | 0 |
-| `src/modeling/predict.py` | 83 | 0 | 0 | 0 |
-| `src/modeling/train.py` | 60 | 0 | 0 | 0 |
-| `src/plots.py` | 0 | 0 | 0 | 0 |
+| File                       | LOC | High | Medium | Low |
+| -------------------------- | --- | ---- | ------ | --- |
+| `src/__init__.py`          | 2   | 0    | 0      | 0   |
+| `src/config.py`            | 14  | 0    | 0      | 0   |
+| `src/dataset.py`           | 115 | 0    | 0      | 0   |
+| `src/features.py`          | 27  | 0    | 0      | 0   |
+| `src/modeling/__init__.py` | 0   | 0    | 0      | 0   |
+| `src/modeling/predict.py`  | 83  | 0    | 0      | 0   |
+| `src/modeling/train.py`    | 60  | 0    | 0      | 0   |
+| `src/plots.py`             | 0   | 0    | 0      | 0   |
 <!-- BANDIT_END -->
 
 ## Linting Scores

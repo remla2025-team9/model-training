@@ -53,12 +53,20 @@ jobs:
         dvc push
 
         echo "MODEL_FILE_PATH=models/model.joblib" >> $GITHUB_ENV
+        echo "VECTORIZER_FILE_PATH=vectorizers/vectorizer.joblib" >> $GITHUB_ENV
 
     # Upload trained model as GitHub Actions artifact
     - name: Upload Model Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: sentiment-classifier-${{ steps.tag_version.outputs.new_tag }}
+        name: model-${{ steps.tag_version.outputs.new_tag }}
+        path: ${{ env.MODEL_FILE_PATH }}
+
+        # Upload trained model as GitHub Actions artifact
+    - name: Upload Model Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: vectorizer-${{ steps.tag_version.outputs.new_tag }}
         path: ${{ env.MODEL_FILE_PATH }}
 
     # Upload model evaluation metrics as GitHub Actions artifact
@@ -88,6 +96,7 @@ jobs:
         name: "Pre-release ${{ steps.tag_version.outputs.new_tag }}"
         files: |
           ${{ env.MODEL_FILE_PATH }}
+          ${{ env.VECTORIZER_FILE_PATH }}
           reports/evaluation_metrics.json
         prerelease: true
       env:

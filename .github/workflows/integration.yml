@@ -56,17 +56,10 @@ jobs:
           echo "Pulling DVC data..."
           dvc pull
           echo "DVC pull completed."
-      
-      # Rebuild preprocessor (featurize) to ensure data is ready for training
-      - name: Rebuild preprocessor (featurize)
-        run: |
-          echo "Rebuilding preprocessor..."
-          dvc repro featurize
-          echo "Featurize completed."
 
       # Run DVC pipeline to prepare, train, and evaluate the model    
       - name: Run DVC pipeline
         run: |
           echo "Running DVC pipeline..."
-          dvc repro prepare train evaluate
-          echo "DVC pipeline completed."
+          dvc repro
+          echo "DVC pipeline completed successfully."
