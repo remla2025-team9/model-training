@@ -1,80 +1,84 @@
 schema: '2.0'
 stages:
   prepare:
-    cmd: python -m src.dataset
+    cmd: python -m src.features
     deps:
     - path: data/raw/training_data.tsv
       hash: md5
       md5: 8104bfc2f44d60939e1fd3208a187500
       size: 55587
-    - path: src/dataset.py
+    - path: src/features.py
       hash: md5
-      md5: a402e97b800438f2f1f9b9f06a3429ab
-      size: 5139
+      md5: 59ef3deb6196b2aaae56b3cbd9e12406
+      size: 5376
     params:
       params.yaml:
         prepare.test_size: 0.2
     outs:
     - path: data/processed/test_features.npz
       hash: md5
-      md5: b08551e9522b16b6569a2f37d5931da1
-      size: 10503
+      md5: e7f35d1d197036e0db68ce3ac189bf68
+      size: 3162
     - path: data/processed/test_labels.csv
       hash: md5
-      md5: 92a45bf68e001776dba101734d7f91cb
-      size: 366
+      md5: b7f4dbafce301f52407a4f006f1f4b9d
+      size: 547
     - path: data/processed/train_features.npz
       hash: md5
-      md5: c6a64993c0b849f8392a220c2553092e
-      size: 37259
+      md5: 76c3c90b93ccb7f2f57ec0b938aec698
+      size: 8882
     - path: data/processed/train_labels.csv
       hash: md5
-      md5: c9da4f76457a0c28a2eeef9ff2ba55d4
-      size: 1446
+      md5: 6f66f6cdc59e4525eaf447dd35d7de24
+      size: 2167
+    - path: vectorizers/vectorizer.joblib
+      hash: md5
+      md5: 03f624025216e9eecd04e0b8f9b8fed5
+      size: 25777
   train:
     cmd: python -m src.modeling.train --model_type logistic
     deps:
     - path: data/processed/train_features.npz
       hash: md5
-      md5: c6a64993c0b849f8392a220c2553092e
-      size: 37259
+      md5: 76c3c90b93ccb7f2f57ec0b938aec698
+      size: 8882
     - path: data/processed/train_labels.csv
       hash: md5
-      md5: c9da4f76457a0c28a2eeef9ff2ba55d4
-      size: 1446
+      md5: 6f66f6cdc59e4525eaf447dd35d7de24
+      size: 2167
     - path: src/modeling/train.py
       hash: md5
-      md5: a3857835c5886f8e2eeb955e049b82e1
-      size: 2326
+      md5: 816b7a8f093728800442eeec53e8fa3b
+      size: 2402
     outs:
     - path: models/model.joblib
       hash: md5
-      md5: ec2688b427475488b56f4cc95721186e
-      size: 12591
+      md5: cf171185d26799c358f45e1eb34a62fa
+      size: 7951
   evaluate:
     cmd: python -m src.modeling.predict --model_path models/model.joblib
     deps:
     - path: data/processed/test_features.npz
       hash: md5
-      md5: b08551e9522b16b6569a2f37d5931da1
-      size: 10503
+      md5: e7f35d1d197036e0db68ce3ac189bf68
+      size: 3162
     - path: data/processed/test_labels.csv
       hash: md5
-      md5: 92a45bf68e001776dba101734d7f91cb
-      size: 366
+      md5: b7f4dbafce301f52407a4f006f1f4b9d
+      size: 547
     - path: models/model.joblib
       hash: md5
-      md5: ec2688b427475488b56f4cc95721186e
-      size: 12591
+      md5: cf171185d26799c358f45e1eb34a62fa
+      size: 7951
     - path: src/modeling/predict.py
       hash: md5
-      md5: 7f67b7c7f1baa0a4611dad3f21e186ad
-      size: 3363
+      md5: d12295555241594b570120fa1a24d64f
+      size: 3463
     outs:
     - path: reports/evaluation_metrics.json
       hash: md5
-      md5: 1eb93d172a44f7310cb3f2e6b23b7ff9
-      size: 1125
+      md5: 3287b52826f5780064284a973f454092
+      size: 1180
   featurize:
     cmd: python src/features.py --seed 42 --input data/raw/training_data.tsv 
       --output vectorizers/preprocessor.joblib
@@ -92,3 +96,15 @@ stages:
       hash: md5
       md5: 2f6dad4c5bac772963b271b50878c77e
       size: 31326
+  load_data:
+    cmd: python -m src.dataset
+    deps:
+    - path: src/dataset.py
+      hash: md5
+      md5: f5c776efd1c33f26ad7ec88bfa9bd44d
+      size: 1749
+    outs:
+    - path: data/raw/training_data.tsv
+      hash: md5
+      md5: 8104bfc2f44d60939e1fd3208a187500
+      size: 55587

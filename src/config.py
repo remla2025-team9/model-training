@@ -21,4 +21,4 @@ TEST_FEATURES_FILE = PROCESSED_DATA_DIR / "test_features.npz"
 TEST_LABELS_FILE = PROCESSED_DATA_DIR / "test_labels.csv"
 EVALUATION_METRICS_FILE = REPORTS_DIR / "evaluation_metrics.json"
 
-VECTORIZERS_DIR = ROOT_DIR / "vectorizers" / "preprocessor.joblib"
+VECTORIZERS_DIR = ROOT_DIR / "vectorizers"

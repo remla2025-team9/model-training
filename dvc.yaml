@@ -2,28 +2,26 @@ metrics:
   - reports/evaluation_metrics.json
 
 stages:
-  prepare:
+  load_data:
     cmd: python -m src.dataset
+    deps:
+      - src/dataset.py
+    outs:
+      - data/raw/training_data.tsv
+
+  prepare:
+    cmd: python -m src.features
     params:
       - prepare.test_size
     deps:
       - data/raw/training_data.tsv
-      - src/dataset.py
+      - src/features.py
     outs:
       - data/processed/train_features.npz
       - data/processed/train_labels.csv
       - data/processed/test_features.npz
       - data/processed/test_labels.csv
-
-  featurize:
-    cmd: python src/features.py --seed 42 --input data/raw/training_data.tsv --output vectorizers/preprocessor.joblib
-    deps:
-      - src/features.py
-      - data/raw/training_data.tsv
-    outs:
-      - vectorizers/preprocessor.joblib:
-          cache: false
-
+      - vectorizers/vectorizer.joblib
 
   train:
     cmd: python -m src.modeling.train --model_type logistic
