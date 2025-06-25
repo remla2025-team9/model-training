@@ -341,7 +341,18 @@ Generated using `pytest` and `pytest-cov`:
 <!-- adequacy-end -->
 
 <!-- BANDIT_START -->
+## Bandit Security Analysis
 
+| File | LOC | High | Medium | Low |
+|------|-----|------|--------|-----|
+| `src/__init__.py` | 2 | 0 | 0 | 0 |
+| `src/config.py` | 14 | 0 | 0 | 0 |
+| `src/dataset.py` | 115 | 0 | 0 | 0 |
+| `src/features.py` | 27 | 0 | 0 | 0 |
+| `src/modeling/__init__.py` | 0 | 0 | 0 | 0 |
+| `src/modeling/predict.py` | 83 | 0 | 0 | 0 |
+| `src/modeling/train.py` | 60 | 0 | 0 | 0 |
+| `src/plots.py` | 0 | 0 | 0 | 0 |
 <!-- BANDIT_END -->
 
 ## Linting Scores

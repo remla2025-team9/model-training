@@ -90,5 +90,5 @@ stages:
     outs:
     - path: vectorizers/preprocessor.joblib
       hash: md5
-      md5: 303e82acb70d21aaa0002c0bc4db49c5
+      md5: 2f6dad4c5bac772963b271b50878c77e
       size: 31326
