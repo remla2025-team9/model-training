@@ -12,6 +12,11 @@ on:
       - 'docs/**'
       - '*.md'
 
+# This workflow requires AWS credentials to access DVC remote storage.
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
 jobs:
   ci-pipeline-smoke-test:
     runs-on: ubuntu-latest
@@ -47,9 +52,6 @@ jobs:
 
       # Pull data files managed by DVC from remote storage
       - name: DVC pull
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           echo "Pulling DVC data..."
           dvc pull
@@ -57,9 +59,6 @@ jobs:
       
       # Rebuild preprocessor (featurize) to ensure data is ready for training
       - name: Rebuild preprocessor (featurize)
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           echo "Rebuilding preprocessor..."
           dvc repro featurize
@@ -67,9 +66,6 @@ jobs:
 
       # Run DVC pipeline to prepare, train, and evaluate the model    
       - name: Run DVC pipeline
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           echo "Running DVC pipeline..."
           dvc repro prepare train evaluate

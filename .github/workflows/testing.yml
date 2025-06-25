@@ -18,10 +18,12 @@ on:
 permissions:
   contents: write
 
-# Environment variables for container registry and Git configuration
+# Environment variables for container registry and Git configuration and AWS credentials for DVC remote storage
 env:
   GIT_USER_NAME: "github-actions[bot]"
   GIT_USER_EMAIL: "github-actions[bot]@users.noreply.github.com"
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
 jobs:
     python-tests:
@@ -67,9 +69,6 @@ jobs:
 
           # Pull data files managed by DVC from remote storage
           - name: DVC pull
-            env:
-              AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-              AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             run: |
               echo "Pulling DVC data..."
               dvc pull
@@ -77,9 +76,6 @@ jobs:
           
           # Execute DVC pipeline and push results to remote storage
           - name: Run DVC pipeline
-            env:
-              AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-              AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             run: |
               echo "Running DVC pipeline..."
               dvc repro
