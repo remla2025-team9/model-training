@@ -85,7 +85,7 @@ jobs:
           # Run pytest with coverage reporting
           - name: Run tests
             run: |
-              pytest tests/ --cov=src --cov-report=term > pytest-coverage.txt
+              pytest tests/ --cov=src --cov-report=term | tee pytest-coverage.txt
           
           # Generate and format coverage report as Markdown table for README
           - name: Format and insert coverage as Markdown table
