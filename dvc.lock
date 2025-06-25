@@ -9,8 +9,8 @@ stages:
       size: 55587
     - path: src/features.py
       hash: md5
-      md5: 3b5f45aa4074a092a7821afc46413eb8
-      size: 5418
+      md5: 59ef3deb6196b2aaae56b3cbd9e12406
+      size: 5376
     params:
       params.yaml:
         prepare.test_size: 0.2
@@ -31,6 +31,10 @@ stages:
       hash: md5
       md5: 6f66f6cdc59e4525eaf447dd35d7de24
       size: 2167
+    - path: vectorizers/vectorizer.joblib
+      hash: md5
+      md5: 03f624025216e9eecd04e0b8f9b8fed5
+      size: 25777
   train:
     cmd: python -m src.modeling.train --model_type logistic
     deps:
@@ -97,8 +101,8 @@ stages:
     deps:
     - path: src/dataset.py
       hash: md5
-      md5: 38c9f485b9ba0628dbb596bf1caefa52
-      size: 1771
+      md5: f5c776efd1c33f26ad7ec88bfa9bd44d
+      size: 1749
     outs:
     - path: data/raw/training_data.tsv
       hash: md5
