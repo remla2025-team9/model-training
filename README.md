@@ -383,17 +383,16 @@ bandit -r src/ -c linting/bandit.yaml
 
 <!-- coverage-start -->
 
-| File                       | Stmts | Miss | Cover |
-| -------------------------- | ----- | ---- | ----- |
-| `src/__init__.py`          | 1     | 0    | 100%  |
-| `src/config.py`            | 13    | 0    | 100%  |
-| `src/dataset.py`           | 60    | 4    | 93%   |
-| `src/features.py`          | 22    | 0    | 100%  |
-| `src/modeling/__init__.py` | 0     | 0    | 100%  |
-| `src/modeling/predict.py`  | 47    | 2    | 96%   |
-| `src/modeling/train.py`    | 40    | 1    | 98%   |
-| `src/plots.py`             | 0     | 0    | 100%  |
-| **Total**                  | 183   | 7    | 96%   |
+| File | Stmts | Miss | Cover |
+|------|-------|------|--------|
+| `src/__init__.py` | 1 | 0 | 100% |
+| `src/config.py` | 13 | 0 | 100% |
+| `src/dataset.py` | 23 | 3 | 87% |
+| `src/features.py` | 56 | 1 | 98% |
+| `src/modeling/__init__.py` | 0 | 0 | 100% |
+| `src/modeling/predict.py` | 47 | 2 | 96% |
+| `src/modeling/train.py` | 40 | 1 | 98% |
+| **Total** | 180 | 7 | 96% |
 
 <!-- coverage-end -->
 
@@ -418,32 +417,31 @@ Generated using `pytest` and `pytest-cov`:
 
 ## 🧪 Test Adequacy Metrics
 <!-- adequacy-start -->
-| Metric               | Value  |
-| -------------------- | ------ |
-| Accuracy             | 0.7556 |
-| Precision (weighted) | 0.7563 |
-| Recall (weighted)    | 0.7556 |
-| F1 Score (weighted)  | 0.7536 |
+| Metric               | Value   |
+|----------------------|---------|
+| Accuracy             | 0.7389  |
+| Precision (weighted) | 0.7392  |
+| Recall (weighted)    | 0.7389  |
+| F1 Score (weighted)  | 0.739  |
 
 <details>
 <summary>Confusion Matrix</summary>
-[[55, 27], [17, 81]]
+[[59, 23], [24, 74]]
 </details>
 <!-- adequacy-end -->
 
 <!-- BANDIT_START -->
 ## Bandit Security Analysis
 
-| File                       | LOC | High | Medium | Low |
-| -------------------------- | --- | ---- | ------ | --- |
-| `src/__init__.py`          | 2   | 0    | 0      | 0   |
-| `src/config.py`            | 14  | 0    | 0      | 0   |
-| `src/dataset.py`           | 115 | 0    | 0      | 0   |
-| `src/features.py`          | 27  | 0    | 0      | 0   |
-| `src/modeling/__init__.py` | 0   | 0    | 0      | 0   |
-| `src/modeling/predict.py`  | 83  | 0    | 0      | 0   |
-| `src/modeling/train.py`    | 60  | 0    | 0      | 0   |
-| `src/plots.py`             | 0   | 0    | 0      | 0   |
+| File | LOC | High | Medium | Low |
+|------|-----|------|--------|-----|
+| `src/__init__.py` | 2 | 0 | 0 | 0 |
+| `src/config.py` | 14 | 0 | 0 | 0 |
+| `src/dataset.py` | 38 | 0 | 0 | 0 |
+| `src/features.py` | 114 | 0 | 0 | 0 |
+| `src/modeling/__init__.py` | 0 | 0 | 0 | 0 |
+| `src/modeling/predict.py` | 83 | 0 | 0 | 0 |
+| `src/modeling/train.py` | 60 | 0 | 0 | 0 |
 <!-- BANDIT_END -->
 
 ## Linting Scores
