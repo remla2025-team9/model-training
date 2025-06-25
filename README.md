@@ -17,7 +17,7 @@ The project follows a structure adapted from the Cookiecutter Data Science templ
 │   └── workflows/
 │       ├── integration.yml   # Code quality and pipeline validation
 │       ├── testing.yml       # Test execution and coverage reporting
-│       ├── delivery.yml      # Automated pre-release creation
+│       ├── delivery.yml      # Automated pre-release creation   
 │       └── deployment.yml    # Stable release deployment
 ├── data/
 │   ├── raw/             # Original, immutable data
@@ -46,7 +46,14 @@ The project follows a structure adapted from the Cookiecutter Data Science templ
 └── README.md            # This file
 ```
 
----
+## Remote Storage
+
+The project uses two remote storage systems managed by DVC:
+- **AWS S3**: Remote storage for DVC artifacts (models, processed data, vectorizers)
+- **Google Drive**: Remote storage for raw training data
+
+AWS credentials are configured as GitHub repository secrets (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) to enable DVC operations in CI/CD workflows.
+
 
 ## Setup
 
@@ -113,7 +120,7 @@ dvc repro evaluate    # Evaluate model
 
 The pipeline consists of four sequential stages:
 
-1. **`load_data`** - Downloads raw training data from Google Drive
+1. **`load_data`** - Downloads raw training data from Google Drive Remote Storage
    - **Outputs:** `data/raw/training_data.tsv`
 
 2. **`prepare`** - Processes raw data into ML-ready features
@@ -136,7 +143,7 @@ For development or debugging, you can run individual steps:
 
 **Step 1: Load Data**
 
-Download raw training data from Google Drive:
+Download raw training data from Google Drive Remote Storage:
 
 ```bash
 python -m src.dataset
