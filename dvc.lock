@@ -33,7 +33,7 @@ stages:
       size: 1446
     - path: vectorizers/vectorizer.joblib
       hash: md5
-      md5: 2a8d659ad22a2c978e61316ea4799952
+      md5: 8dbbdbd302a7b9c2d5a96a3032feb7ee
       size: 25777
   train:
     cmd: python -m src.modeling.train --model_type logistic
