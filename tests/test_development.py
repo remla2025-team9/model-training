@@ -1,7 +1,6 @@
 import pytest
-import numpy as np
-from scipy.sparse import issparse
-from src import dataset
+import pandas as pd
+from src.features import generate_features  
 from src import config  
 import joblib
 from sklearn.dummy import DummyClassifier
@@ -17,7 +16,10 @@ def real_raw_data_path():
 
 @pytest.fixture(scope="module")
 def processed_data(real_raw_data_path):
-    X, y = dataset.load_and_generate_features(real_raw_data_path, text_col='Review', label_col='Liked')
+    
+    df = pd.read_csv(real_raw_data_path, delimiter='\t', quoting=3)
+    
+    X, y = generate_features(df, text_col='Review', label_col='Liked')
     return X, y
 
 def get_latest_model_file(models_dir: Path):

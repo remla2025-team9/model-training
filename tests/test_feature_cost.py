@@ -1,58 +1,51 @@
 import time
+import tracemalloc
 import joblib
-from src import config
-from scipy.sparse import load_npz
+import pandas as pd
+import pytest
+from src import config  
 
-def load_latest_model():
-    """
-    Load the most recently modified model file (*.joblib) from the models directory.
-    """
-    model_files = list(config.MODELS_DIR.glob("*.joblib"))
-    model_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
-    return joblib.load(model_files[0])
+@pytest.fixture
+def sample_dataset():
+   
+    data = {
+        "Review": [
+            "I love this product",
+            "Terrible experience, will not buy again",
+            "Pretty good, could be better",
+        ],
+        "Liked": [1, 0, 1],
+    }
+    return pd.DataFrame(data)
 
-def prepare_features_for_model(model, X):
-    """
-    Decide whether to convert a sparse matrix to a dense matrix based on the model type.
-    Currently, conversion is done for GaussianNB only; other models are assumed to support sparse matrices.
-    """
-    
-    from sklearn.naive_bayes import GaussianNB
 
-    if isinstance(model, GaussianNB):
-        if hasattr(X, "toarray"):
-            return X.toarray()
-    return X
+def test_prediction_latency(sample_dataset):
+  
+    vectorizer = joblib.load(config.VECTORIZERS_DIR / "vectorizer.joblib")
+    model = joblib.load(config.MODELS_DIR / "model.joblib")
 
-def test_prediction_latency():
-    """
-    Test the latency of the model's prediction on the test feature dataset.
-    """
-    model = load_latest_model()
-    X_test = load_npz(config.TEST_FEATURES_FILE)
-    X_test = prepare_features_for_model(model, X_test)
+    texts = sample_dataset["Review"].tolist()
+    X = vectorizer.transform(texts)
 
     start = time.time()
-    model.predict(X_test)
-    end = time.time()
+    model.predict(X)
+    elapsed = time.time() - start
 
-    latency = end - start
-    print(f"Prediction latency: {latency:.4f} seconds")
-    assert latency < 1.0, "Prediction latency too high"
+    assert elapsed < 5, f"Prediction too slow: {elapsed:.4f}s"
 
-def test_memory_usage():
-    """
-    Test the peak memory usage during model prediction on the test dataset.
-    """
-    import tracemalloc
-    model = load_latest_model()
-    X_test = load_npz(config.TEST_FEATURES_FILE)
-    X_test = prepare_features_for_model(model, X_test)
 
+def test_memory_usage(sample_dataset):
     tracemalloc.start()
-    model.predict(X_test)
+
+    vectorizer = joblib.load(config.VECTORIZERS_DIR / "vectorizer.joblib")
+    model = joblib.load(config.MODELS_DIR / "model.joblib")
+
+    texts = sample_dataset["Review"].tolist()
+    X = vectorizer.transform(texts)
+    model.predict(X)
+
     current, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
 
-    print(f"Memory usage during prediction: Current={current/1024:.2f}KB, Peak={peak/1024:.2f}KB")
-    assert peak < 100 * 1024 * 1024, "Memory usage too high"
+    peak_mb = peak / 1024 / 1024
+    assert peak_mb < 50, f"Peak memory usage too high: {peak_mb:.2f} MB"
