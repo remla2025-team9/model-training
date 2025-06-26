@@ -79,7 +79,7 @@ def test_metamorphic_synonym_invariance():
     ]
 
     model_path = get_latest_model_file(config.MODELS_DIR)
-    processor_path = "vectorizers/preprocessor.joblib"
+    processor_path = "vectorizers/vectorizer.joblib"
 
     mismatches, repaired = metamorphic_test(texts, model_path, processor_path)
 
