@@ -387,12 +387,12 @@ bandit -r src/ -c linting/bandit.yaml
 |------|-------|------|--------|
 | `src/__init__.py` | 1 | 0 | 100% |
 | `src/config.py` | 13 | 0 | 100% |
-| `src/dataset.py` | 23 | 3 | 87% |
+| `src/dataset.py` | 23 | 0 | 100% |
 | `src/features.py` | 56 | 1 | 98% |
 | `src/modeling/__init__.py` | 0 | 0 | 100% |
 | `src/modeling/predict.py` | 47 | 2 | 96% |
 | `src/modeling/train.py` | 40 | 1 | 98% |
-| **Total** | 180 | 7 | 96% |
+| **Total** | 180 | 4 | 98% |
 
 <!-- coverage-end -->
 
@@ -419,14 +419,14 @@ Generated using `pytest` and `pytest-cov`:
 <!-- adequacy-start -->
 | Metric               | Value   |
 |----------------------|---------|
-| Accuracy             | 0.7389  |
-| Precision (weighted) | 0.7392  |
-| Recall (weighted)    | 0.7389  |
-| F1 Score (weighted)  | 0.739  |
+| Accuracy             | 0.6667  |
+| Precision (weighted) | 0.8333  |
+| Recall (weighted)    | 0.6667  |
+| F1 Score (weighted)  | 0.6667  |
 
 <details>
 <summary>Confusion Matrix</summary>
-[[59, 23], [24, 74]]
+[[1, 0], [1, 1]]
 </details>
 <!-- adequacy-end -->
 
